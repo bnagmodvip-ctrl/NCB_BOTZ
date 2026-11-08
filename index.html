@@ -6,7 +6,7 @@
 <title>NHẬP KEY XÁC MINH</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js"></script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box;
       font-family:'Segoe UI','Inter',system-ui,sans-serif; }
@@ -56,10 +56,7 @@
     transition:transform .5s cubic-bezier(.16,1,.3,1), opacity .4s ease;
     max-width:calc(100vw - 32px);
   }
-  .notice-banner.show {
-    transform:translateX(-50%) translateY(0);
-    opacity:1;
-  }
+  .notice-banner.show { transform:translateX(-50%) translateY(0); opacity:1; }
   .notice-banner-icon {
     width:26px; height:26px;
     background:rgba(255,255,255,0.22);
@@ -73,11 +70,7 @@
     50%     { box-shadow:0 0 0 8px rgba(255,255,255,0); }
   }
   .notice-banner-icon i { font-size:13px; color:#fff; }
-  .notice-banner-text {
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
+  .notice-banner-text { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .notice-banner-close {
     width:28px; height:28px;
     background:rgba(255,255,255,0.25);
@@ -359,8 +352,8 @@
   .expired-btn:hover { transform:translateY(-2px); box-shadow:0 10px 30px rgba(214,51,108,0.8); }
   .expired-btn:active { transform:translateY(0) scale(.97); }
 
-  /* ===== IMAGE / ESP SCREEN ===== */
-  .image-screen {
+  /* ===== CAMERA SCREEN ===== */
+  .camera-screen {
     position:fixed; inset:0;
     background:linear-gradient(135deg,#ffe4ec 0%,#fff5f8 35%,#ffd6e4 100%);
     z-index:50; display:none;
@@ -368,10 +361,10 @@
     padding:40px 20px 120px;
     animation:fadeIn .6s ease;
   }
-  .image-screen.show { display:block; }
+  .camera-screen.show { display:block; }
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
 
-  .image-screen::before {
+  .camera-screen::before {
     content:""; position:fixed; inset:0;
     background:
       radial-gradient(circle at 15% 20%, rgba(255,105,180,0.18), transparent 40%),
@@ -379,230 +372,244 @@
     pointer-events:none;
   }
 
-  .image-header {
+  .camera-header {
     position:relative; z-index:2;
-    max-width:900px; margin:0 auto 32px; text-align:center;
+    max-width:900px; margin:0 auto 24px; text-align:center;
   }
-  .image-header h1 {
+  .camera-header h1 {
     font-size:32px; font-weight:900; letter-spacing:.18em;
     color:#d6336c; text-transform:uppercase;
     text-shadow:0 2px 20px rgba(214,51,108,0.15);
     margin-bottom:8px;
   }
-  .image-header p {
+  .camera-header p {
     font-size:12px; letter-spacing:.25em;
     color:#b8477a; text-transform:uppercase;
   }
-  .image-header::after {
+  .camera-header::after {
     content:""; display:block; width:60px; height:2px;
     background:linear-gradient(90deg,transparent,#ff69b4,transparent);
     margin:16px auto 0;
   }
 
-  .upload-zone {
-    position:relative; z-index:2;
-    max-width:900px; margin:0 auto;
-    background:linear-gradient(135deg,rgba(255,255,255,0.85),rgba(255,240,245,0.85));
-    border:2.5px dashed #ff69b4;
+  .camera-wrap {
+    position:relative;
+    max-width:900px;
+    margin:0 auto;
+    background:#000;
     border-radius:20px;
-    padding:50px 30px;
-    text-align:center;
-    cursor:pointer;
-    transition:all .3s ease;
-    backdrop-filter:blur(8px);
-    box-shadow:0 15px 40px rgba(214,51,108,0.12);
-  }
-  .upload-zone:hover,
-  .upload-zone.dragover {
-    border-color:#d6336c;
-    background:linear-gradient(135deg,rgba(255,240,245,0.95),rgba(255,228,236,0.95));
-    transform:translateY(-3px);
-    box-shadow:0 20px 50px rgba(214,51,108,0.25);
-  }
-  .upload-zone.dragover { transform:scale(1.02); }
-
-  .upload-icon {
-    width:80px; height:80px;
-    margin:0 auto 20px;
-    background:linear-gradient(135deg,#ff69b4,#d6336c);
-    border-radius:50%;
-    display:grid; place-items:center;
-    box-shadow:0 10px 30px rgba(214,51,108,0.35);
-    animation:uploadFloat 3s ease-in-out infinite;
-  }
-  @keyframes uploadFloat {
-    0%,100% { transform:translateY(0); }
-    50%     { transform:translateY(-8px); }
-  }
-  .upload-icon i { font-size:34px; color:#fff; }
-
-  .upload-title {
-    font-size:18px; font-weight:800;
-    color:#2d1a24; margin-bottom:8px;
-    letter-spacing:.02em;
-  }
-  .upload-sub {
-    font-size:13px; color:#b8477a;
-    letter-spacing:.05em; margin-bottom:6px;
-  }
-  .upload-hint {
-    font-size:11px; color:#999;
-    letter-spacing:.05em;
+    overflow:hidden;
+    border:2px solid #ff69b4;
+    box-shadow:0 20px 60px rgba(214,51,108,0.35),
+               0 0 0 1px rgba(255,255,255,0.15) inset;
+    min-height:320px;
+    z-index:2;
   }
 
-  /* Loading */
-  .processing-overlay {
-    position:relative; z-index:2;
-    max-width:900px; margin:20px auto 0;
-    display:none; text-align:center; padding:30px 20px;
+  #camVideo {
+    display:block;
+    width:100%;
+    height:auto;
+    background:#000;
   }
-  .processing-overlay.show { display:block; }
-  .processing-spinner {
+
+  #camCanvas {
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    z-index:3;
+  }
+
+  /* Scanning line animation */
+  .cam-scanline {
+    position:absolute;
+    left:0; right:0;
+    height:3px;
+    background:linear-gradient(90deg, transparent, #ff2e88, #ff69b4, #ff2e88, transparent);
+    box-shadow:0 0 20px rgba(255,46,136,0.9);
+    z-index:4;
+    animation:scanMove 2.5s ease-in-out infinite;
+    pointer-events:none;
+    opacity:0;
+  }
+  @keyframes scanMove {
+    0% { top:5%; opacity:0; }
+    10% { opacity:1; }
+    90% { opacity:1; }
+    100% { top:95%; opacity:0; }
+  }
+  .cam-scanline.active { opacity:1; }
+
+  /* Corner brackets on video */
+  .cam-corner {
+    position:absolute;
+    width:40px; height:40px;
+    border:3px solid #ff69b4;
+    z-index:4;
+    pointer-events:none;
+    filter:drop-shadow(0 0 8px rgba(255,105,180,0.8));
+  }
+  .cam-corner.tl { top:12px; left:12px; border-right:none; border-bottom:none; border-radius:12px 0 0 0; }
+  .cam-corner.tr { top:12px; right:12px; border-left:none; border-bottom:none; border-radius:0 12px 0 0; }
+  .cam-corner.bl { bottom:12px; left:12px; border-right:none; border-top:none; border-radius:0 0 0 12px; }
+  .cam-corner.br { bottom:12px; right:12px; border-left:none; border-top:none; border-radius:0 0 12px 0; }
+
+  /* Loading overlay */
+  .cam-loading {
+    position:absolute; inset:0;
+    background:rgba(10,10,15,0.92);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:16px;
+    z-index:10;
+    color:#fff;
+    border-radius:20px;
+  }
+  .cam-loading.hide { display:none; }
+  .cam-spinner {
     width:56px; height:56px;
-    margin:0 auto 16px;
-    border:4px solid rgba(214,51,108,0.2);
-    border-top-color:#d6336c;
+    border:4px solid rgba(255,105,180,0.25);
+    border-top-color:#ff69b4;
     border-radius:50%;
     animation:spin 0.9s linear infinite;
   }
   @keyframes spin { to { transform:rotate(360deg); } }
-  .processing-text {
-    font-size:14px; color:#b8477a;
-    font-weight:700; letter-spacing:.05em;
-    margin-bottom:6px;
-  }
-  .processing-sub {
-    font-size:12px; color:#999;
-    letter-spacing:.03em;
-  }
-
-  /* Result */
-  .result-area {
-    position:relative; z-index:2;
-    max-width:900px; margin:24px auto 0;
-    display:none;
-    animation:rise .6s ease both;
-  }
-  .result-area.show { display:block; }
-
-  .result-card {
-    background:#fff;
-    border-radius:20px;
-    padding:20px;
-    box-shadow:0 15px 50px rgba(214,51,108,0.18);
-    border:2px solid #ffe4ec;
-  }
-
-  .result-info {
-    display:flex; align-items:center; justify-content:center;
-    gap:10px;
-    margin-bottom:16px;
-    padding:14px;
-    background:linear-gradient(135deg,#ffe4ec,#fff5f8);
-    border-radius:14px;
-    border:1.5px solid #ffb6c1;
-  }
-  .result-info-icon {
-    width:32px; height:32px;
-    background:linear-gradient(135deg,#ff69b4,#d6336c);
-    border-radius:50%;
-    display:grid; place-items:center;
-    flex-shrink:0;
-  }
-  .result-info-icon i { font-size:14px; color:#fff; }
-  .result-info-text {
-    font-size:14px; font-weight:800;
-    color:#d6336c; letter-spacing:.05em;
+  .cam-loading-title {
+    font-size:14px;
+    font-weight:800;
+    color:#ff69b4;
+    letter-spacing:.15em;
     text-transform:uppercase;
   }
-
-  .canvas-wrap {
-    position:relative;
-    width:100%;
-    background:#0a0a0f;
-    border-radius:14px;
-    overflow:hidden;
-    border:1.5px solid #ffe4ec;
-    margin-bottom:16px;
-  }
-  #resultCanvas {
-    display:block;
-    width:100%;
-    height:auto;
+  .cam-loading-sub {
+    font-size:12px;
+    color:rgba(255,255,255,0.55);
+    letter-spacing:.05em;
+    text-align:center;
+    padding:0 20px;
+    line-height:1.6;
   }
 
-  .result-actions {
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:12px;
+  /* Error overlay */
+  .cam-error {
+    position:absolute; inset:0;
+    background:linear-gradient(180deg,#2a0a0f,#150508);
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:16px;
+    z-index:11;
+    padding:30px;
+    border-radius:20px;
+    text-align:center;
   }
-  .action-btn {
-    padding:14px;
+  .cam-error.show { display:flex; }
+  .cam-error-icon {
+    width:64px; height:64px;
+    background:linear-gradient(135deg,#ff3a4a,#a01020);
+    border-radius:50%;
+    display:grid; place-items:center;
+    box-shadow:0 10px 30px rgba(255,58,74,0.5);
+  }
+  .cam-error-icon i { font-size:28px; color:#fff; }
+  .cam-error-title {
+    font-size:16px;
+    font-weight:800;
+    color:#ff5a6a;
+    letter-spacing:.10em;
+    text-transform:uppercase;
+  }
+  .cam-error-text {
+    font-size:12.5px;
+    color:rgba(255,255,255,0.7);
+    line-height:1.7;
+    max-width:340px;
+  }
+  .cam-error-btn {
+    padding:12px 24px;
     border-radius:12px;
     border:none;
-    font-size:13px;
+    background:linear-gradient(135deg,#ff5a9a,#d6336c);
+    color:#fff;
+    font-size:12.5px;
     font-weight:800;
     letter-spacing:.12em;
     text-transform:uppercase;
     cursor:pointer;
-    transition:all .25s ease;
     font-family:inherit;
-    display:flex;
+    transition:all .25s ease;
+    display:inline-flex;
     align-items:center;
-    justify-content:center;
-    gap:8px;
+    gap:6px;
+    box-shadow:0 6px 20px rgba(214,51,108,0.5);
   }
-  .action-btn.download {
-    background:linear-gradient(135deg,#ff69b4,#d6336c);
-    color:#fff;
-    box-shadow:0 6px 20px rgba(214,51,108,0.4);
-  }
-  .action-btn.download:hover {
+  .cam-error-btn:hover {
     transform:translateY(-2px);
-    box-shadow:0 10px 30px rgba(214,51,108,0.7);
-  }
-  .action-btn.reset {
-    background:#fff;
-    color:#d6336c;
-    border:2px solid #ffb6c1;
-  }
-  .action-btn.reset:hover {
-    background:linear-gradient(135deg,#ffe4ec,#fff5f8);
-    border-color:#d6336c;
-    transform:translateY(-2px);
+    box-shadow:0 10px 30px rgba(214,51,108,0.8);
   }
 
-  .no-person-card {
-    background:#fff;
+  /* Badge */
+  .cam-badge {
+    position:absolute;
+    top:16px;
+    left:50%;
+    transform:translateX(-50%);
+    background:rgba(10,10,15,0.85);
+    border:1.5px solid #ff69b4;
+    color:#fff;
+    padding:8px 16px;
     border-radius:20px;
-    padding:32px 24px;
-    box-shadow:0 15px 50px rgba(214,51,108,0.18);
-    border:2px solid #ffe4ec;
-    text-align:center;
-    animation:rise .6s ease both;
-  }
-  .no-person-icon {
-    width:70px; height:70px;
-    margin:0 auto 18px;
-    background:linear-gradient(135deg,#ffd6e4,#ffb6c1);
-    border-radius:50%;
-    display:grid; place-items:center;
-    box-shadow:0 10px 25px rgba(214,51,108,0.2);
-  }
-  .no-person-icon i { font-size:32px; color:#d6336c; }
-  .no-person-title {
-    font-size:16px;
+    font-size:11px;
     font-weight:800;
-    color:#d6336c;
-    margin-bottom:8px;
-    letter-spacing:.05em;
+    letter-spacing:.15em;
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    z-index:6;
+    backdrop-filter:blur(10px);
+    box-shadow:0 4px 20px rgba(214,51,108,0.5);
+    transition:all .3s ease;
+    white-space:nowrap;
   }
-  .no-person-sub {
-    font-size:13px;
-    color:#b8477a;
-    line-height:1.6;
-    margin-bottom:20px;
+  .cam-badge i { font-size:12px; }
+  .cam-badge.scanning { border-color:#ffb84d; color:#ffb84d; }
+  .cam-badge.detected { border-color:#35d69a; color:#35d69a; }
+  .cam-badge.error    { border-color:#ff5a6a; color:#ff5a6a; }
+
+  /* Flip button */
+  .cam-flip-btn {
+    position:absolute;
+    bottom:16px;
+    right:16px;
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    background:rgba(10,10,15,0.8);
+    border:1.5px solid #ff69b4;
+    color:#ff69b4;
+    cursor:pointer;
+    display:grid;
+    place-items:center;
+    z-index:6;
+    backdrop-filter:blur(10px);
+    transition:all .25s ease;
+    box-shadow:0 4px 20px rgba(214,51,108,0.5);
   }
+  .cam-flip-btn:hover {
+    background:#ff69b4;
+    color:#fff;
+    transform:scale(1.1);
+  }
+  .cam-flip-btn:active {
+    transform:scale(0.95);
+  }
+  .cam-flip-btn i { font-size:18px; }
 
   /* Bottom nav */
   .bottom-nav {
@@ -768,13 +775,13 @@
     .buttons { grid-template-columns:1fr; }
     .header h1 { font-size:19px; }
     #keyInput { padding:17px 16px; font-size:14px; }
-    .image-header h1 { font-size:22px; }
-    .image-screen { padding:30px 14px 100px; }
-    .upload-zone { padding:36px 20px; }
-    .upload-icon { width:64px; height:64px; }
-    .upload-icon i { font-size:28px; }
-    .upload-title { font-size:16px; }
-    .result-actions { grid-template-columns:1fr; }
+    .camera-header h1 { font-size:22px; }
+    .camera-screen { padding:30px 14px 100px; }
+    .camera-wrap { min-height:260px; }
+    .cam-badge { font-size:10px; padding:6px 12px; }
+    .cam-flip-btn { width:42px; height:42px; }
+    .cam-flip-btn i { font-size:16px; }
+    .cam-corner { width:32px; height:32px; border-width:2.5px; }
     .bottom-nav-inner { gap:30px; }
     .nav-btn { padding:8px 16px; }
     .countdown-block { min-width:54px; padding:8px 10px; }
@@ -822,7 +829,7 @@
 
   <div class="success" id="successBox">
     <h2>✅ XÁC THỰC THÀNH CÔNG</h2>
-    <p>Key hợp lệ — đang mở công cụ ESP...</p>
+    <p>Key hợp lệ — đang khởi động camera...</p>
   </div>
 </main>
 
@@ -861,69 +868,49 @@
   </div>
 </div>
 
-<!-- IMAGE ESP SCREEN -->
-<div class="image-screen" id="imageScreen">
-  <div class="image-header">
-    <h1>ESP BOX TOOL</h1>
-    <p>AI phát hiện người trong ảnh</p>
+<!-- CAMERA ESP SCREEN -->
+<div class="camera-screen" id="cameraScreen">
+  <div class="camera-header">
+    <h1>ESP CAMERA</h1>
+    <p>AI định vị khung xương</p>
   </div>
 
-  <div class="upload-zone" id="uploadZone">
-    <div class="upload-icon">
-      <i class="fa-solid fa-cloud-arrow-up"></i>
-    </div>
-    <div class="upload-title">Chọn ảnh để phát hiện</div>
-    <div class="upload-sub">Kéo thả hoặc bấm để chọn ảnh</div>
-    <div class="upload-hint">Hỗ trợ: JPG · PNG · WEBP</div>
-    <input type="file" id="fileInput" accept="image/*" hidden>
-  </div>
+  <div class="camera-wrap" id="cameraWrap">
+    <video id="camVideo" autoplay playsinline muted></video>
+    <canvas id="camCanvas"></canvas>
 
-  <div class="processing-overlay" id="processingOverlay">
-    <div class="processing-spinner"></div>
-    <div class="processing-text" id="processingText">Đang tải AI...</div>
-    <div class="processing-sub" id="processingSub">Vui lòng chờ trong giây lát</div>
-  </div>
+    <div class="cam-corner tl"></div>
+    <div class="cam-corner tr"></div>
+    <div class="cam-corner bl"></div>
+    <div class="cam-corner br"></div>
 
-  <div class="result-area" id="resultArea">
-    <div class="result-card" id="resultCard">
-      <div class="result-info">
-        <div class="result-info-icon">
-          <i class="fa-solid fa-user-check"></i>
-        </div>
-        <div class="result-info-text" id="resultInfoText">0 người được phát hiện</div>
-      </div>
+    <div class="cam-scanline" id="camScanline"></div>
 
-      <div class="canvas-wrap">
-        <canvas id="resultCanvas"></canvas>
-      </div>
-
-      <div class="result-actions">
-        <button class="action-btn download" id="btnDownload">
-          <i class="fa-solid fa-download"></i>
-          Tải xuống
-        </button>
-        <button class="action-btn reset" id="btnReset">
-          <i class="fa-solid fa-rotate-left"></i>
-          Ảnh khác
-        </button>
-      </div>
+    <div class="cam-badge" id="camBadge">
+      <i class="fa-solid fa-circle-notch fa-spin"></i>
+      <span id="camBadgeText">Đang khởi động...</span>
     </div>
 
-    <div class="no-person-card" id="noPersonCard" style="display:none;">
-      <div class="no-person-icon">
-        <i class="fa-solid fa-user-slash"></i>
+    <button class="cam-flip-btn" id="camFlipBtn" title="Đổi camera">
+      <i class="fa-solid fa-camera-rotate"></i>
+    </button>
+
+    <div class="cam-loading" id="camLoading">
+      <div class="cam-spinner"></div>
+      <div class="cam-loading-title">ĐANG KHỞI ĐỘNG</div>
+      <div class="cam-loading-sub" id="camLoadingSub">Đang tải AI và camera...</div>
+    </div>
+
+    <div class="cam-error" id="camError">
+      <div class="cam-error-icon"><i class="fa-solid fa-video-slash"></i></div>
+      <div class="cam-error-title">KHÔNG THỂ TRUY CẬP CAMERA</div>
+      <div class="cam-error-text" id="camErrorText">
+        Vui lòng cho phép quyền camera trong trình duyệt và tải lại trang.
       </div>
-      <div class="no-person-title">Không phát hiện người</div>
-      <div class="no-person-sub">
-        Ảnh này không có người trong khung hình.<br>
-        Vui lòng chọn ảnh khác có người.
-      </div>
-      <div class="result-actions">
-        <button class="action-btn reset" id="btnResetNoPerson" style="grid-column:1/-1;">
-          <i class="fa-solid fa-rotate-left"></i>
-          Chọn ảnh khác
-        </button>
-      </div>
+      <button class="cam-error-btn" id="camRetryBtn">
+        <i class="fa-solid fa-rotate-right"></i>
+        Thử lại
+      </button>
     </div>
   </div>
 </div>
@@ -981,6 +968,9 @@
 (function () {
   "use strict";
 
+  /* ============================================================
+     CẤU HÌNH
+     ============================================================ */
   const VALID_KEYS = [
     "NCB_XNHAU_291030_27",
     "NCB_XNHAU_03YU0_2P",
@@ -1000,8 +990,11 @@
   const LS_CURRENT = "ff_current_key";
   const LS_NOTICE  = "ff_notice_dismissed";
 
+  /* ============================================================
+     DOM
+     ============================================================ */
   const keyScreen      = document.getElementById("keyScreen");
-  const imageScreen    = document.getElementById("imageScreen");
+  const cameraScreen   = document.getElementById("cameraScreen");
   const inputWrap      = document.getElementById("inputWrap");
   const input          = document.getElementById("keyInput");
   const btnGet         = document.getElementById("btnGet");
@@ -1035,28 +1028,36 @@
   const expiredKeyName = document.getElementById("expiredKeyName");
   const expiredOk      = document.getElementById("expiredOk");
 
-  // Image processing
-  const uploadZone         = document.getElementById("uploadZone");
-  const fileInput          = document.getElementById("fileInput");
-  const processingOverlay  = document.getElementById("processingOverlay");
-  const processingText     = document.getElementById("processingText");
-  const processingSub      = document.getElementById("processingSub");
-  const resultArea         = document.getElementById("resultArea");
-  const resultCard         = document.getElementById("resultCard");
-  const resultCanvas       = document.getElementById("resultCanvas");
-  const resultInfoText     = document.getElementById("resultInfoText");
-  const noPersonCard       = document.getElementById("noPersonCard");
-  const btnDownload        = document.getElementById("btnDownload");
-  const btnReset           = document.getElementById("btnReset");
-  const btnResetNoPerson   = document.getElementById("btnResetNoPerson");
+  // Camera
+  const cameraWrap     = document.getElementById("cameraWrap");
+  const camVideo       = document.getElementById("camVideo");
+  const camCanvas      = document.getElementById("camCanvas");
+  const camBadge       = document.getElementById("camBadge");
+  const camBadgeText   = document.getElementById("camBadgeText");
+  const camFlipBtn     = document.getElementById("camFlipBtn");
+  const camLoading     = document.getElementById("camLoading");
+  const camLoadingSub  = document.getElementById("camLoadingSub");
+  const camError       = document.getElementById("camError");
+  const camErrorText   = document.getElementById("camErrorText");
+  const camRetryBtn    = document.getElementById("camRetryBtn");
+  const camScanline    = document.getElementById("camScanline");
 
   let countdownInterval = null;
   let lockInterval = null;
   let expiryCheckInterval = null;
-  let cocoModel = null;
-  let currentProcessedBlob = null;
 
-  /* NOTICE */
+  /* Camera state */
+  let camStream = null;
+  let poseDetector = null;
+  let isDetecting = false;
+  let rafId = null;
+  let isProcessing = false;
+  let currentFacing = "user"; // 'user' | 'environment'
+  let lastBadge = "";
+
+  /* ============================================================
+     NOTICE
+     ============================================================ */
   function showNotice() {
     try {
       if (localStorage.getItem(LS_NOTICE) === "1") return;
@@ -1072,7 +1073,9 @@
   }
   noticeClose.addEventListener("click", hideNotice);
 
-  /* HELPERS */
+  /* ============================================================
+     HELPERS
+     ============================================================ */
   function setStatus(msg, type) {
     status.textContent = msg;
     status.classList.remove("ok", "error", "warn");
@@ -1126,7 +1129,9 @@
     } catch (e) {}
   }
 
-  /* LOCK */
+  /* ============================================================
+     LOCK
+     ============================================================ */
   function showLock(until) {
     lockOverlay.classList.add("show");
     inputWrap.classList.add("disabled");
@@ -1168,18 +1173,22 @@
     return false;
   }
 
-  /* EXPIRED */
+  /* ============================================================
+     EXPIRED
+     ============================================================ */
   function showExpired(keyName) {
     expiredKeyName.textContent = keyName || "—";
     expiredOverlay.classList.add("show");
+    stopCamera();
   }
   function hideExpired() { expiredOverlay.classList.remove("show"); }
 
   expiredOk.addEventListener("click", () => {
     hideExpired();
-    imageScreen.classList.remove("show");
+    cameraScreen.classList.remove("show");
     bottomNav.classList.remove("show");
     profileOverlay.classList.remove("show");
+    stopCamera();
     try { localStorage.removeItem(LS_CURRENT); } catch (e) {}
 
     if (expiryCheckInterval) {
@@ -1210,7 +1219,7 @@
       if (Date.now() >= activatedAt + KEY_DURATION_MS) {
         clearInterval(expiryCheckInterval);
         expiryCheckInterval = null;
-        const isActive = imageScreen.classList.contains("show");
+        const isActive = cameraScreen.classList.contains("show");
         if (isActive) {
           profileOverlay.classList.remove("show");
           showExpired(curKey);
@@ -1219,214 +1228,372 @@
     }, 1000);
   }
 
-  /* ===== LOAD AI MODEL ===== */
-  async function loadModel() {
-    if (cocoModel) return cocoModel;
-    processingText.textContent = "Đang tải AI...";
-    processingSub.textContent = "Lần đầu có thể mất 10-20 giây";
-    cocoModel = await coco.ssd.load({
-      base: "lite_mobilenet_v2"
-    });
-    return cocoModel;
+  /* ============================================================
+     BADGE
+     ============================================================ */
+  function setBadge(text, type) {
+    if (text === lastBadge) return;
+    lastBadge = text;
+    camBadgeText.textContent = text;
+    camBadge.classList.remove("scanning", "detected", "error");
+    if (type) camBadge.classList.add(type);
+    const icon = camBadge.querySelector("i");
+    if (type === "detected") {
+      icon.className = "fa-solid fa-user-check";
+    } else if (type === "error") {
+      icon.className = "fa-solid fa-triangle-exclamation";
+    } else {
+      icon.className = "fa-solid fa-circle-notch fa-spin";
+    }
   }
 
-  /* ===== PROCESS IMAGE ===== */
-  async function processImage(file) {
-    if (!file || !file.type.startsWith("image/")) {
-      alert("Vui lòng chọn file ảnh (JPG, PNG, WEBP)");
-      return;
-    }
-
-    // Reset kết quả cũ
-    resultArea.classList.remove("show");
-    resultCard.style.display = "none";
-    noPersonCard.style.display = "none";
-    currentProcessedBlob = null;
-
-    processingOverlay.classList.add("show");
+  /* ============================================================
+     CAMERA
+     ============================================================ */
+  async function startCamera() {
+    // Reset UI
+    camLoading.classList.remove("hide");
+    camError.classList.remove("show");
+    camLoadingSub.textContent = "Đang tải AI và camera...";
+    setBadge("Đang khởi động...", "scanning");
+    camScanline.classList.add("active");
 
     try {
-      // Load model
-      const model = await loadModel();
+      // 1. Mở camera trước
+      await openCameraStream();
 
-      // Load ảnh vào Image
-      const img = await new Promise((resolve, reject) => {
-        const i = new Image();
-        i.onload = () => resolve(i);
-        i.onerror = reject;
-        i.src = URL.createObjectURL(file);
-      });
+      // 2. Load AI model
+      camLoadingSub.textContent = "Đang tải AI (lần đầu ~10 giây)...";
+      await loadPoseDetector();
 
-      processingText.textContent = "Đang phân tích ảnh...";
-      processingSub.textContent = "AI đang tìm người trong ảnh";
-
-      // Chạy nhận diện
-      const predictions = await model.detect(img);
-
-      // Lọc chỉ class "person"
-      const persons = predictions.filter(p => p.class === "person");
-
-      // Vẽ lên canvas
-      const scale = Math.min(1, 1400 / Math.max(img.width, img.height));
-      resultCanvas.width = Math.floor(img.width * scale);
-      resultCanvas.height = Math.floor(img.height * scale);
-
-      const ctx = resultCanvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, resultCanvas.width, resultCanvas.height);
-
-      // Vẽ ESP box
-      persons.forEach(p => {
-        const [x, y, w, h] = p.bbox;
-        const sx = x * scale;
-        const sy = y * scale;
-        const sw = w * scale;
-        const sh = h * scale;
-
-        // Glow effect
-        ctx.shadowColor = "#ff2e88";
-        ctx.shadowBlur = 20;
-
-        // Box
-        ctx.strokeStyle = "#ff2e88";
-        ctx.lineWidth = 4;
-        ctx.strokeRect(sx, sy, sw, sh);
-
-        // Góc box
-        ctx.shadowBlur = 0;
-        ctx.lineWidth = 6;
-        const corner = Math.min(sw, sh) * 0.18;
-        // Top-left
-        ctx.beginPath();
-        ctx.moveTo(sx, sy + corner);
-        ctx.lineTo(sx, sy);
-        ctx.lineTo(sx + corner, sy);
-        ctx.stroke();
-        // Top-right
-        ctx.beginPath();
-        ctx.moveTo(sx + sw - corner, sy);
-        ctx.lineTo(sx + sw, sy);
-        ctx.lineTo(sx + sw, sy + corner);
-        ctx.stroke();
-        // Bottom-left
-        ctx.beginPath();
-        ctx.moveTo(sx, sy + sh - corner);
-        ctx.lineTo(sx, sy + sh);
-        ctx.lineTo(sx + corner, sy + sh);
-        ctx.stroke();
-        // Bottom-right
-        ctx.beginPath();
-        ctx.moveTo(sx + sw - corner, sy + sh);
-        ctx.lineTo(sx + sw, sy + sh);
-        ctx.lineTo(sx + sw, sy + sh - corner);
-        ctx.stroke();
-
-        // Label
-        const label = "PERSON " + Math.round(p.score * 100) + "%";
-        ctx.font = "bold 16px 'Segoe UI', sans-serif";
-        const tw = ctx.measureText(label).width;
-
-        const labelY = sy > 30 ? sy - 8 : sy + 24;
-        // Label background
-        ctx.fillStyle = "rgba(255, 46, 136, 0.95)";
-        ctx.beginPath();
-        ctx.roundRect(sx, labelY - 22, tw + 16, 26, 6);
-        ctx.fill();
-
-        // Label text
-        ctx.fillStyle = "#fff";
-        ctx.shadowColor = "transparent";
-        ctx.shadowBlur = 0;
-        ctx.fillText(label, sx + 8, labelY - 3);
-      });
-
-      // Hiện kết quả
-      processingOverlay.classList.remove("show");
-      resultArea.classList.add("show");
-
-      if (persons.length > 0) {
-        resultCard.style.display = "block";
-        noPersonCard.style.display = "none";
-        resultInfoText.textContent = persons.length + " người được phát hiện";
-
-        // Lưu blob để download
-        resultCanvas.toBlob((blob) => {
-          currentProcessedBlob = blob;
-        }, "image/png");
-      } else {
-        resultCard.style.display = "none";
-        noPersonCard.style.display = "block";
-      }
-
-      URL.revokeObjectURL(img.src);
+      // 3. Ẩn loading, bắt đầu quét
+      camLoading.classList.add("hide");
+      setBadge("Đang quét...", "scanning");
+      startDetectLoop();
 
     } catch (err) {
-      console.error(err);
-      processingOverlay.classList.remove("show");
-      alert("Lỗi xử lý ảnh: " + err.message);
+      console.error("[Camera]", err);
+      showCameraError(err);
     }
   }
 
-  /* Polyfill roundRect nếu chưa có */
-  if (!CanvasRenderingContext2D.prototype.roundRect) {
-    CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
-      if (w < 2 * r) r = w / 2;
-      if (h < 2 * r) r = h / 2;
-      this.beginPath();
-      this.moveTo(x + r, y);
-      this.arcTo(x + w, y, x + w, y + h, r);
-      this.arcTo(x + w, y + h, x, y + h, r);
-      this.arcTo(x, y + h, x, y, r);
-      this.arcTo(x, y, x + w, y, r);
-      this.closePath();
-      return this;
+  async function openCameraStream() {
+    // Dừng stream cũ nếu có
+    if (camStream) {
+      camStream.getTracks().forEach(t => t.stop());
+      camStream = null;
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error("Trình duyệt không hỗ trợ camera (cần HTTPS)");
+    }
+
+    const constraints = {
+      audio: false,
+      video: {
+        facingMode: currentFacing,
+        width:  { ideal: 1280 },
+        height: { ideal: 720 }
+      }
     };
+
+    camStream = await navigator.mediaDevices.getUserMedia(constraints);
+    camVideo.srcObject = camStream;
+
+    await new Promise((resolve) => {
+      if (camVideo.readyState >= 1) return resolve();
+      camVideo.onloadedmetadata = () => resolve();
+    });
+
+    await camVideo.play().catch(() => {});
+
+    // Set canvas size khớp video
+    camCanvas.width = camVideo.videoWidth || 640;
+    camCanvas.height = camVideo.videoHeight || 480;
   }
 
-  /* Upload events */
-  uploadZone.addEventListener("click", () => fileInput.click());
-  uploadZone.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    uploadZone.classList.add("dragover");
-  });
-  uploadZone.addEventListener("dragleave", () => uploadZone.classList.remove("dragover"));
-  uploadZone.addEventListener("drop", (e) => {
-    e.preventDefault();
-    uploadZone.classList.remove("dragover");
-    const file = e.dataTransfer.files[0];
-    if (file) processImage(file);
-  });
-  fileInput.addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (file) processImage(file);
-    fileInput.value = "";
-  });
+  async function loadPoseDetector() {
+    if (poseDetector) return poseDetector;
+    const model = poseDetection.SupportedModels.MoveNet;
+    poseDetector = await poseDetection.createDetector(model, {
+      modelType: "SinglePose.Lightning",
+      enableSmoothing: true
+    });
+    return poseDetector;
+  }
 
-  /* Download */
-  btnDownload.addEventListener("click", () => {
-    if (!currentProcessedBlob) {
-      alert("Chưa có ảnh để tải");
+  function startDetectLoop() {
+    isDetecting = true;
+    if (rafId) cancelAnimationFrame(rafId);
+
+    async function loop() {
+      if (!isDetecting) return;
+
+      if (!isProcessing && camVideo.readyState >= 2 && poseDetector) {
+        isProcessing = true;
+        try {
+          const poses = await poseDetector.estimatePoses(camVideo, {
+            maxPoses: 1,
+            flipHorizontal: false
+          });
+          drawPoses(poses);
+        } catch (err) {
+          // Bỏ qua lỗi frame
+        }
+        isProcessing = false;
+      }
+
+      rafId = requestAnimationFrame(loop);
+    }
+
+    rafId = requestAnimationFrame(loop);
+  }
+
+  /* ============================================================
+     DRAW SKELETON
+     ============================================================ */
+  const SKELETON = [
+    // Mặt
+    ["nose", "left_eye"],
+    ["nose", "right_eye"],
+    ["left_eye", "left_ear"],
+    ["right_eye", "right_ear"],
+    // Vai
+    ["left_shoulder", "right_shoulder"],
+    // Tay trái
+    ["left_shoulder", "left_elbow"],
+    ["left_elbow", "left_wrist"],
+    // Tay phải
+    ["right_shoulder", "right_elbow"],
+    ["right_elbow", "right_wrist"],
+    // Thân
+    ["left_shoulder", "left_hip"],
+    ["right_shoulder", "right_hip"],
+    ["left_hip", "right_hip"],
+    // Chân trái
+    ["left_hip", "left_knee"],
+    ["left_knee", "left_ankle"],
+    // Chân phải
+    ["right_hip", "right_knee"],
+    ["right_knee", "right_ankle"]
+  ];
+
+  const MIN_SCORE = 0.3;
+
+  function drawPoses(poses) {
+    const ctx = camCanvas.getContext("2d");
+    const W = camCanvas.width;
+    const H = camCanvas.height;
+
+    // Clear
+    ctx.clearRect(0, 0, W, H);
+
+    if (!poses || poses.length === 0) {
+      setBadge("Không phát hiện người", "scanning");
       return;
     }
-    const url = URL.createObjectURL(currentProcessedBlob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "esp-box-" + Date.now() + ".png";
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+    const pose = poses[0];
+    if (!pose.keypoints || pose.keypoints.length === 0) {
+      setBadge("Không phát hiện người", "scanning");
+      return;
+    }
+
+    // Tạo map name -> keypoint
+    const kp = {};
+    for (const k of pose.keypoints) {
+      kp[k.name] = k;
+    }
+
+    // Vẽ xương
+    ctx.shadowColor = "#ff2e88";
+    ctx.shadowBlur = 18;
+    ctx.strokeStyle = "#ff2e88";
+    ctx.lineWidth = Math.max(3, W * 0.005);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    for (const [a, b] of SKELETON) {
+      const ka = kp[a], kb = kp[b];
+      if (!ka || !kb) continue;
+      if ((ka.score || 0) < MIN_SCORE) continue;
+      if ((kb.score || 0) < MIN_SCORE) continue;
+
+      ctx.beginPath();
+      ctx.moveTo(ka.x, ka.y);
+      ctx.lineTo(kb.x, kb.y);
+      ctx.stroke();
+    }
+
+    // Vẽ khớp
+    ctx.shadowBlur = 0;
+
+    for (const name in kp) {
+      const k = kp[name];
+      if ((k.score || 0) < MIN_SCORE) continue;
+
+      // Outer glow
+      ctx.shadowColor = "#ff69b4";
+      ctx.shadowBlur = 15;
+      ctx.fillStyle = "#ff69b4";
+      ctx.beginPath();
+      ctx.arc(k.x, k.y, Math.max(6, W * 0.008), 0, Math.PI * 2);
+      ctx.fill();
+
+      // Inner white
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(k.x, k.y, Math.max(3, W * 0.004), 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Vẽ box tổng bao quanh người
+    const valid = pose.keypoints.filter(k => (k.score || 0) >= MIN_SCORE);
+    if (valid.length > 2) {
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const k of valid) {
+        if (k.x < minX) minX = k.x;
+        if (k.y < minY) minY = k.y;
+        if (k.x > maxX) maxX = k.x;
+        if (k.y > maxY) maxY = k.y;
+      }
+
+      const pad = Math.max(20, W * 0.02);
+      minX -= pad; minY -= pad; maxX += pad; maxY += pad;
+      minX = Math.max(0, minX); minY = Math.max(0, minY);
+      maxX = Math.min(W, maxX); maxY = Math.min(H, maxY);
+
+      // Box nét đứt
+      ctx.shadowColor = "#ff2e88";
+      ctx.shadowBlur = 20;
+      ctx.strokeStyle = "#ff2e88";
+      ctx.lineWidth = Math.max(2, W * 0.003);
+      ctx.setLineDash([12, 8]);
+      ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+      ctx.setLineDash([]);
+
+      // 4 góc đậm
+      const cornerLen = Math.min(maxX - minX, maxY - minY) * 0.18;
+      ctx.lineWidth = Math.max(5, W * 0.007);
+      ctx.strokeStyle = "#ff69b4";
+      // TL
+      ctx.beginPath(); ctx.moveTo(minX, minY + cornerLen); ctx.lineTo(minX, minY); ctx.lineTo(minX + cornerLen, minY); ctx.stroke();
+      // TR
+      ctx.beginPath(); ctx.moveTo(maxX - cornerLen, minY); ctx.lineTo(maxX, minY); ctx.lineTo(maxX, minY + cornerLen); ctx.stroke();
+      // BL
+      ctx.beginPath(); ctx.moveTo(minX, maxY - cornerLen); ctx.lineTo(minX, maxY); ctx.lineTo(minX + cornerLen, maxY); ctx.stroke();
+      // BR
+      ctx.beginPath(); ctx.moveTo(maxX - cornerLen, maxY); ctx.lineTo(maxX, maxY); ctx.lineTo(maxX, maxY - cornerLen); ctx.stroke();
+
+      // Label PERSON
+      ctx.shadowBlur = 0;
+      const label = "PERSON";
+      const font = Math.max(12, Math.round(W * 0.018));
+      ctx.font = "bold " + font + "px 'Segoe UI', sans-serif";
+      const tw = ctx.measureText(label).width;
+      const labelY = minY > font + 20 ? minY - 8 : minY + font + 12;
+
+      ctx.fillStyle = "rgba(255, 46, 136, 0.95)";
+      const labelX = minX;
+      const labelH = font + 8;
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(labelX, labelY - labelH, tw + 16, labelH, 5);
+      } else {
+        ctx.rect(labelX, labelY - labelH, tw + 16, labelH);
+      }
+      ctx.fill();
+
+      ctx.fillStyle = "#fff";
+      ctx.fillText(label, labelX + 8, labelY - 6);
+    }
+
+    setBadge("Đã phát hiện · " + valid.length + " điểm", "detected");
+  }
+
+  /* ============================================================
+     CAMERA ERROR
+     ============================================================ */
+  function showCameraError(err) {
+    const ctx = camCanvas.getContext("2d");
+    if (ctx) ctx.clearRect(0, 0, camCanvas.width, camCanvas.height);
+
+    camLoading.classList.add("hide");
+    camError.classList.add("show");
+    camScanline.classList.remove("active");
+    setBadge("Lỗi camera", "error");
+
+    let msg = "Không thể truy cập camera.";
+    const name = err && err.name ? err.name : "";
+    if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+      msg = "Bạn đã từ chối quyền camera. Vui lòng bật lại trong cài đặt trình duyệt rồi tải lại trang.";
+    } else if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+      msg = "Không tìm thấy camera trên thiết bị.";
+    } else if (name === "NotReadableError") {
+      msg = "Camera đang được ứng dụng khác sử dụng.";
+    } else if (name === "OverconstrainedError") {
+      msg = "Camera không hỗ trợ cấu hình này.";
+    } else if (err && err.message) {
+      msg = err.message + ". Cần HTTPS hoặc localhost.";
+    }
+    camErrorText.textContent = msg;
+  }
+
+  /* ============================================================
+     STOP CAMERA
+     ============================================================ */
+  function stopCamera() {
+    isDetecting = false;
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    if (camStream) {
+      camStream.getTracks().forEach(t => t.stop());
+      camStream = null;
+    }
+    try {
+      camVideo.srcObject = null;
+    } catch (e) {}
+    const ctx = camCanvas.getContext("2d");
+    if (ctx) ctx.clearRect(0, 0, camCanvas.width, camCanvas.height);
+    camScanline.classList.remove("active");
+  }
+
+  /* ============================================================
+     FLIP CAMERA
+     ============================================================ */
+  camFlipBtn.addEventListener("click", async () => {
+    currentFacing = currentFacing === "user" ? "environment" : "user";
+    stopCamera();
+    isDetecting = false;
+
+    try {
+      camLoading.classList.remove("hide");
+      camLoadingSub.textContent = "Đang chuyển camera...";
+      await openCameraStream();
+      camLoading.classList.add("hide");
+      camScanline.classList.add("active");
+      setBadge("Đang quét...", "scanning");
+      startDetectLoop();
+    } catch (err) {
+      showCameraError(err);
+    }
   });
 
-  /* Reset */
-  function resetTool() {
-    resultArea.classList.remove("show");
-    resultCard.style.display = "none";
-    noPersonCard.style.display = "none";
-    currentProcessedBlob = null;
-    uploadZone.scrollIntoView({ behavior: "smooth", block: "center" });
-  }
-  btnReset.addEventListener("click", resetTool);
-  btnResetNoPerson.addEventListener("click", resetTool);
+  /* ============================================================
+     RETRY
+     ============================================================ */
+  camRetryBtn.addEventListener("click", () => {
+    camError.classList.remove("show");
+    stopCamera();
+    startCamera();
+  });
 
-  /* KEY CONFIRM */
+  /* ============================================================
+     KEY CONFIRM
+     ============================================================ */
   btnConfirm.addEventListener("click", () => {
     const until = getLockUntil();
     if (until && until > Date.now()) {
@@ -1495,11 +1662,13 @@
     keyScreen.style.transform = "scale(0.95)";
     setTimeout(() => {
       keyScreen.style.display = "none";
-      imageScreen.classList.add("show");
+      cameraScreen.classList.add("show");
       bottomNav.classList.add("show");
       navHome.classList.add("active");
       navProfile.classList.remove("active");
       startExpiryCheck();
+      // Tự động bật camera
+      startCamera();
     }, 500);
   }
 
@@ -1605,9 +1774,10 @@
     try { localStorage.removeItem(LS_CURRENT); } catch (e) {}
     if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
     if (expiryCheckInterval) { clearInterval(expiryCheckInterval); expiryCheckInterval = null; }
+    stopCamera();
     profileOverlay.classList.remove("show");
     bottomNav.classList.remove("show");
-    imageScreen.classList.remove("show");
+    cameraScreen.classList.remove("show");
     keyScreen.style.display = "flex";
     keyScreen.style.opacity = "1";
     keyScreen.style.transform = "scale(1)";
@@ -1618,6 +1788,11 @@
     btnPaste.disabled = false;
     successBox.classList.remove("show");
     setStatus("Đã đăng xuất key. Vui lòng nhập lại.", "ok");
+  });
+
+  // Dừng camera khi rời trang
+  window.addEventListener("beforeunload", () => {
+    stopCamera();
   });
 
   /* INIT */
