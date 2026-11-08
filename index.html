@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Key Access</title>
+<title>Key Access · Auth.gg</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box;
       font-family:'Segoe UI','Inter',system-ui,sans-serif; }
@@ -151,9 +151,9 @@
   }
   .success p {
     font-size:12px; color:rgba(255,255,255,.65); letter-spacing:.06em;
+    line-height:1.7;
   }
 
-  /* Loading spinner */
   .spinner {
     display:inline-block; width:12px; height:12px;
     border:2px solid rgba(255,255,255,0.3);
@@ -202,7 +202,7 @@
 
   <div class="success" id="successBox">
     <h2>✅ XÁC THỰC THÀNH CÔNG</h2>
-    <p>Key hợp lệ — bạn có thể tiếp tục.</p>
+    <p id="successMsg">Key hợp lệ — bạn có thể tiếp tục.</p>
   </div>
 </main>
 
@@ -211,21 +211,23 @@
   "use strict";
 
   /* ==========================================================
-     CẤU HÌNH SERVER XÁC THỰC
+     CẤU HÌNH AUTH.GG
      ========================================================== */
-  const SERVER_API_KEY = "as_nd5jpgikhoba97fbmel47cxvqtovjzsnxa01z9io6bhsoixb";
+  const CONFIG = {
+    API_KEY:  "as_nd5jpgikhoba97fbmel47cxvqtovjzsnxa01z9io6bhsoixb",
+    APP_ID:   "fo16bc51881imc664hdl55hd",
+    OWNER_ID: "nvd43oxl5iwjumumfyj1j4dl",
+    SECRET:   "as_nd5jpgikhoba97fbmel47cxvqtovjzsnxa01z9io6bhsoixb",
+    APP_VER:  "1.0.0",
+    API_URL:  "https://api.auth.gg/v1/",
+    TIMEOUT_MS: 12000,
+    GET_KEY_URL: "https://example.com/get-key" // <-- đổi link
+  };
 
-  // Endpoint xác thực — thay URL thật của bạn
-  // Hỗ trợ cả 2 kiểu: GET ?key= hoặc POST JSON { key }
-  const VERIFY_ENDPOINT = "https://api.example.com/verify";  // <-- ĐỔI
-  const VERIFY_METHOD   = "POST";  // "GET" hoặc "POST"
-
-  // Timeout ms
-  const TIMEOUT_MS = 10000;
-
-  // Lưu key đã xác thực
-  const STORAGE_KEY = "ff_verified_key";
-  const STORAGE_TIME = "ff_verified_at";
+  const STORAGE_KEY    = "ff_verified_key";
+  const STORAGE_TIME   = "ff_verified_at";
+  const STORAGE_EXPIRE = "ff_expire_at";
+  const STORAGE_SESSION= "ff_session_id";
 
   /* ==========================================================
      DOM
@@ -236,6 +238,7 @@
   const btnConfirm = document.getElementById("btnConfirm");
   const status     = document.getElementById("status");
   const successBox = document.getElementById("successBox");
+  const successMsg = document.getElementById("successMsg");
 
   /* ==========================================================
      UTILS
@@ -246,109 +249,129 @@
     if (type) status.classList.add(type);
   }
 
-  function setLoading(loading) {
+  function setLoading(loading, text) {
     if (loading) {
       btnConfirm.disabled = true;
-      btnConfirm.innerHTML = '<span class="spinner"></span> ĐANG XÁC THỰC...';
+      btnConfirm.innerHTML = '<span class="spinner"></span> ' + (text || "ĐANG XÁC THỰC...");
     } else {
       btnConfirm.disabled = false;
       btnConfirm.textContent = "Xác Nhận";
     }
   }
 
-  /* ==========================================================
-     GỌI API XÁC THỰC
-     ========================================================== */
-  async function verifyWithServer(userKey) {
+  function fetchWithTimeout(url, options, timeout) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    const timer = setTimeout(() => controller.abort(), timeout || CONFIG.TIMEOUT_MS);
+    return fetch(url, { ...options, signal: controller.signal })
+      .finally(() => clearTimeout(timer));
+  }
 
+  /* ==========================================================
+     BƯỚC 1: AUTH.GG INIT — LẤY SESSION ID
+     ========================================================== */
+  async function authInit() {
+    const body = new URLSearchParams({
+      type:   "init",
+      ver:    CONFIG.APP_VER,
+      aid:    CONFIG.APP_ID,
+      apikey: CONFIG.API_KEY,
+      secret: CONFIG.SECRET
+    });
+
+    const res = await fetchWithTimeout(CONFIG.API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: body.toString()
+    });
+
+    if (!res.ok) throw new Error("Init HTTP " + res.status);
+
+    const data = await res.json();
+
+    if (data.result !== "success") {
+      throw new Error(data.message || "Init thất bại");
+    }
+
+    return data.sessionid;
+  }
+
+  /* ==========================================================
+     BƯỚC 2: AUTH.GG LICENSE — XÁC THỰC KEY
+     ========================================================== */
+  async function authLicense(sessionid, userKey) {
+    const body = new URLSearchParams({
+      type:      "license",
+      key:       userKey,
+      aid:       CONFIG.APP_ID,
+      apikey:    CONFIG.API_KEY,
+      secret:    CONFIG.SECRET,
+      sessionid: sessionid,
+      hwid:      getHWID()
+    });
+
+    const res = await fetchWithTimeout(CONFIG.API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: body.toString()
+    });
+
+    if (!res.ok) throw new Error("License HTTP " + res.status);
+
+    const data = await res.json();
+
+    return {
+      valid:     data.result === "success",
+      message:   data.message || "",
+      expire_at: data.expires || data.expired_date || null,
+      sessionid: sessionid,
+      raw:       data
+    };
+  }
+
+  /* ==========================================================
+     HWID — ĐỊNH DANH THIẾT BỊ
+     ========================================================== */
+  function getHWID() {
+    let base = "";
     try {
-      let response;
+      base += navigator.userAgent || "";
+      base += "|" + (navigator.language || "");
+      base += "|" + (screen.width + "x" + screen.height);
+      base += "|" + (navigator.hardwareConcurrency || "");
+      base += "|" + (navigator.platform || "");
+      base += "|" + (navigator.deviceMemory || "");
+    } catch (e) {}
 
-      if (VERIFY_METHOD === "POST") {
-        response = await fetch(VERIFY_ENDPOINT, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-API-Key": SERVER_API_KEY,
-            "Authorization": "Bearer " + SERVER_API_KEY
-          },
-          body: JSON.stringify({
-            key: userKey,
-            api_key: SERVER_API_KEY,
-            timestamp: Date.now()
-          }),
-          signal: controller.signal
-        });
-      } else {
-        const url = VERIFY_ENDPOINT
-          + "?key=" + encodeURIComponent(userKey)
-          + "&api_key=" + encodeURIComponent(SERVER_API_KEY);
-        response = await fetch(url, {
-          method: "GET",
-          headers: {
-            "X-API-Key": SERVER_API_KEY
-          },
-          signal: controller.signal
-        });
+    // Hash SHA-256 nếu có
+    try {
+      let h = 0;
+      for (let i = 0; i < base.length; i++) {
+        h = ((h << 5) - h) + base.charCodeAt(i);
+        h |= 0;
       }
-
-      clearTimeout(timer);
-
-      if (!response.ok) {
-        throw new Error("HTTP " + response.status);
-      }
-
-      const data = await response.json();
-
-      /* ===== PHÂN TÍCH RESPONSE =====
-         Hỗ trợ nhiều dạng response:
-         - { valid: true }
-         - { status: "success" }
-         - { success: 1 }
-         - { code: 200, message: "OK" }
-         - { error: false }
-         - { verified: true }
-      */
-      const isValid =
-        data.valid === true ||
-        data.valid === "true" ||
-        data.verified === true ||
-        data.success === true ||
-        data.success === 1 ||
-        data.status === "success" ||
-        data.status === "ok" ||
-        data.status === "valid" ||
-        data.error === false ||
-        data.code === 200 ||
-        data.code === "200";
-
-      return {
-        valid: isValid,
-        message: data.message || data.msg || (isValid ? "OK" : "Invalid key"),
-        expire_at: data.expire_at || data.expires_at || data.expiry || null,
-        raw: data
-      };
-
-    } catch (err) {
-      clearTimeout(timer);
-      throw err;
+      return "WEB-" + Math.abs(h).toString(16).padStart(16, "0");
+    } catch (e) {
+      return "WEB-UNKNOWN";
     }
   }
 
   /* ==========================================================
-     FALLBACK: kiểm tra local nếu server lỗi
-     (Dùng khi test offline — bỏ đoạn này nếu không muốn)
+     XÁC THỰC CHÍNH
      ========================================================== */
-  const LOCAL_VALID_KEY = SERVER_API_KEY;
-  function fallbackVerify(userKey) {
-    return {
-      valid: userKey === LOCAL_VALID_KEY,
-      message: userKey === LOCAL_VALID_KEY ? "OK (offline)" : "Invalid key",
-      expire_at: null,
-      raw: { fallback: true }
-    };
+  async function verifyKey(userKey) {
+    // Bước 1: Init
+    setStatus("⏳ Đang khởi tạo session...", "info");
+    const sessionid = await authInit();
+
+    // Bước 2: License
+    setStatus("⏳ Đang xác thực license...", "info");
+    const result = await authLicense(sessionid, userKey);
+
+    return result;
   }
 
   /* ==========================================================
@@ -369,19 +392,18 @@
       return;
     }
 
-    setStatus("⏳ Đang kết nối server...", "info");
     setLoading(true);
 
     try {
-      const result = await verifyWithServer(value);
+      const result = await verifyKey(value);
 
       if (result.valid) {
         setStatus("");
         successBox.classList.add("show");
-        successBox.querySelector("p").textContent =
+        successMsg.textContent =
           result.expire_at
             ? "Hạn sử dụng: " + new Date(result.expire_at).toLocaleString("vi-VN")
-            : "Key hợp lệ — bạn có thể tiếp tục.";
+            : (result.message || "Key hợp lệ — bạn có thể tiếp tục.");
 
         input.disabled = true;
         input.style.opacity = "0.7";
@@ -392,36 +414,24 @@
           localStorage.setItem(STORAGE_KEY, value);
           localStorage.setItem(STORAGE_TIME, Date.now().toString());
           if (result.expire_at) {
-            localStorage.setItem("ff_expire_at", String(result.expire_at));
+            localStorage.setItem(STORAGE_EXPIRE, String(result.expire_at));
+          }
+          if (result.sessionid) {
+            localStorage.setItem(STORAGE_SESSION, result.sessionid);
           }
         } catch (e) {}
 
       } else {
-        setStatus("❌ KEY không hợp lệ. " + (result.message || ""), "error");
+        setStatus("❌ " + (result.message || "KEY không hợp lệ"), "error");
         input.focus();
         input.select();
         setLoading(false);
       }
 
     } catch (err) {
-      console.warn("[Verify Error]", err);
-
-      // Thử fallback local
-      const fb = fallbackVerify(value);
-      if (fb.valid) {
-        setStatus("");
-        successBox.classList.add("show");
-        successBox.querySelector("p").textContent = "Key hợp lệ (kiểm tra offline)";
-        input.disabled = true;
-        input.style.opacity = "0.7";
-        try {
-          localStorage.setItem(STORAGE_KEY, value);
-          localStorage.setItem(STORAGE_TIME, Date.now().toString());
-        } catch (e) {}
-      } else {
-        setStatus("❌ Lỗi server: " + (err.message || "Không kết nối được"), "error");
-        setLoading(false);
-      }
+      console.warn("[Auth.gg Error]", err);
+      setStatus("❌ Lỗi: " + (err.message || "Không kết nối được server"), "error");
+      setLoading(false);
     }
   });
 
@@ -454,8 +464,7 @@
      NÚT GET KEY
      ========================================================== */
   btnGet.addEventListener("click", function () {
-    const GET_KEY_URL = "https://example.com/get-key"; // <-- đổi link
-    window.open(GET_KEY_URL, "_blank", "noopener");
+    window.open(CONFIG.GET_KEY_URL, "_blank", "noopener");
     setStatus("🔗 Đang mở trang lấy key...", "info");
   });
 
@@ -469,7 +478,6 @@
     }
   });
 
-  /* Xoá status khi gõ */
   input.addEventListener("input", function () {
     if (status.textContent) {
       status.textContent = "";
@@ -478,39 +486,33 @@
   });
 
   /* ==========================================================
-     AUTO CHECK: nếu đã xác thực trước đó
+     AUTO CHECK
      ========================================================== */
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    const savedAt = parseInt(localStorage.getItem(STORAGE_TIME) || "0", 10);
-    const expireAt = parseInt(localStorage.getItem("ff_expire_at") || "0", 10);
+    const expireAt = parseInt(localStorage.getItem(STORAGE_EXPIRE) || "0", 10);
 
     if (saved) {
-      // Kiểm tra hạn
       if (expireAt && Date.now() > expireAt) {
         localStorage.removeItem(STORAGE_KEY);
         localStorage.removeItem(STORAGE_TIME);
-        localStorage.removeItem("ff_expire_at");
+        localStorage.removeItem(STORAGE_EXPIRE);
+        localStorage.removeItem(STORAGE_SESSION);
         setStatus("⚠ Key trước đã hết hạn, vui lòng nhập lại.", "error");
       } else {
         input.value = saved;
-        // Chỉ auto hiển thị trạng thái, không tự xác thực lại
         setStatus("✓ Key đã được xác thực trước đó.", "ok");
-        // Nếu còn hạn → có thể tự show success
-        if (savedAt && (!expireAt || Date.now() < expireAt)) {
-          successBox.classList.add("show");
-          successBox.querySelector("p").textContent =
-            expireAt
-              ? "Hạn: " + new Date(expireAt).toLocaleString("vi-VN")
-              : "Key đã xác thực trước đó.";
-          input.disabled = true;
-          input.style.opacity = "0.7";
-          btnConfirm.disabled = true;
-          btnPaste.disabled = true;
-        }
+        successBox.classList.add("show");
+        successMsg.textContent = expireAt
+          ? "Hạn: " + new Date(expireAt).toLocaleString("vi-VN")
+          : "Key đã xác thực trước đó.";
+        input.disabled = true;
+        input.style.opacity = "0.7";
+        btnConfirm.disabled = true;
+        btnPaste.disabled = true;
       }
     }
-  } catch (e) { /* ignore */ }
+  } catch (e) {}
 
 })();
 </script>
