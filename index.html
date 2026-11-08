@@ -695,4 +695,461 @@
     <button class="back-btn" id="backBtn" title="Quay lại">
       <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
-    <div class="pla
+    <div class="player-title" id="playerTitle"></div>
+    <iframe id="movieFrame" allowfullscreen allow="autoplay; fullscreen"></iframe>
+  </div>
+</div>
+
+<nav class="bottom-nav" id="bottomNav">
+  <div class="bottom-nav-inner">
+    <button class="nav-btn active" id="navHome" data-tab="home">
+      <i class="fa-solid fa-house"></i>
+      <span>Trang chủ</span>
+    </button>
+    <button class="nav-btn" id="navProfile" data-tab="profile">
+      <i class="fa-solid fa-user"></i>
+      <span>Hồ sơ</span>
+    </button>
+  </div>
+</nav>
+
+<div class="profile-overlay" id="profileOverlay">
+  <div class="profile-box">
+    <button class="close-profile" id="closeProfile">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <div class="profile-icon"><i class="fa-solid fa-key"></i></div>
+    <div class="profile-title">License Key</div>
+    <div class="profile-key" id="profileKey">—</div>
+    <div class="profile-vn-time" id="profileVnTime">—</div>
+    <div class="profile-divider"></div>
+    <div class="countdown-label">Thời Gian Key</div>
+    <div class="countdown-timer">
+      <div class="countdown-block">
+        <div class="countdown-num" id="cdDay">00</div>
+        <div class="countdown-unit">Ngày</div>
+      </div>
+      <div class="countdown-block">
+        <div class="countdown-num" id="cdHour">00</div>
+        <div class="countdown-unit">Giờ</div>
+      </div>
+      <div class="countdown-block">
+        <div class="countdown-num" id="cdMin">00</div>
+        <div class="countdown-unit">Phút</div>
+      </div>
+      <div class="countdown-block">
+        <div class="countdown-num" id="cdSec">00</div>
+        <div class="countdown-unit">Giây</div>
+      </div>
+    </div>
+    <button class="logout-btn" id="logoutBtn">
+      <i class="fa-solid fa-right-from-bracket"></i>
+      Đăng Xuất Key
+    </button>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ============================================================
+     DANH SÁCH KEY HỢP LỆ — BẠN TỰ THÊM/SỬA/XÓA TẠI ĐÂY
+     ============================================================ */
+  const VALID_KEYS = [
+    "NCB_XNHAU_291030_27",
+    "NCB_XNHAU_03YU0_2P",
+    "NCB_XNHAU_291030_27LJA",
+    "NCB_XNHAU_291030_27user",
+    "KEY_MAU_1",
+    "KEY_MAU_2"
+  ];
+
+  /* Thời hạn key: 13 tiếng */
+  const KEY_DURATION_MS = 13 * 60 * 60 * 1000;
+
+  /* ============================================================
+     DANH SÁCH PHIM
+     ============================================================ */
+  const MOVIES = [
+    {
+      name: "EM HỌC SINH (1)",
+      year: "2024",
+      rating: "9.0",
+      poster: "https://picsum.photos/seed/emhocsinh1/400/600",
+      embed: "https://xnhau.pink/embed/254778"
+    },
+    {
+      name: "cal sex",
+      year: "2024",
+      rating: "8.9",
+      poster: "https://picsum.photos/seed/calsex/400/600",
+      embed: "https://xnhau.pink/embed/257961"
+    },
+    {
+      name: "EM TÔI ĐÓ (1)",
+      year: "2024",
+      rating: "9.0",
+      poster: "https://picsum.photos/seed/emtôidó1/400/600",
+      embed: "https://xnhau.pink/embed/252524"
+    },
+    {
+      name: "EM TÔI (1)",
+      year: "2024",
+      rating: "9.0",
+      poster: "https://picsum.photos/seed/emtôi1/400/600",
+      embed: "https://xnhau.pink/embed/288097"
+    }
+  ];
+
+  /* ============================================================
+     DOM
+     ============================================================ */
+  const keyScreen      = document.getElementById("keyScreen");
+  const galleryScreen  = document.getElementById("galleryScreen");
+  const playerScreen   = document.getElementById("playerScreen");
+  const input          = document.getElementById("keyInput");
+  const btnGet         = document.getElementById("btnGet");
+  const btnPaste       = document.getElementById("btnPaste");
+  const btnConfirm     = document.getElementById("btnConfirm");
+  const status         = document.getElementById("status");
+  const successBox     = document.getElementById("successBox");
+  const movieGrid      = document.getElementById("movieGrid");
+  const movieFrame     = document.getElementById("movieFrame");
+  const playerTitle    = document.getElementById("playerTitle");
+  const backBtn        = document.getElementById("backBtn");
+
+  const bottomNav      = document.getElementById("bottomNav");
+  const navHome        = document.getElementById("navHome");
+  const navProfile     = document.getElementById("navProfile");
+  const profileOverlay = document.getElementById("profileOverlay");
+  const closeProfile   = document.getElementById("closeProfile");
+  const profileKey     = document.getElementById("profileKey");
+  const profileVnTime  = document.getElementById("profileVnTime");
+  const logoutBtn      = document.getElementById("logoutBtn");
+  const cdDay          = document.getElementById("cdDay");
+  const cdHour         = document.getElementById("cdHour");
+  const cdMin          = document.getElementById("cdMin");
+  const cdSec          = document.getElementById("cdSec");
+
+  let countdownInterval = null;
+
+  function setStatus(msg, type) {
+    status.textContent = msg;
+    status.classList.remove("ok", "error");
+    if (type) status.classList.add(type);
+  }
+
+  function formatVNTime(ts) {
+    const d = new Date(ts);
+    const vn = new Date(d.getTime() + (d.getTimezoneOffset() * 60000) + (7 * 3600000));
+    const pad = n => String(n).padStart(2, "0");
+    return pad(vn.getDate()) + "/" + pad(vn.getMonth() + 1) + "/" + vn.getFullYear()
+      + " " + pad(vn.getHours()) + ":" + pad(vn.getMinutes()) + ":" + pad(vn.getSeconds());
+  }
+
+  function saveActivation(key, activatedAt) {
+    try {
+      const data = JSON.parse(localStorage.getItem("ff_keys_db") || "{}");
+      data[key] = activatedAt;
+      localStorage.setItem("ff_keys_db", JSON.stringify(data));
+      localStorage.setItem("ff_current_key", key);
+    } catch (e) {}
+  }
+
+  function getActivation(key) {
+    try {
+      const data = JSON.parse(localStorage.getItem("ff_keys_db") || "{}");
+      return data[key] || 0;
+    } catch (e) { return 0; }
+  }
+
+  function getCurrentKey() {
+    try { return localStorage.getItem("ff_current_key") || ""; }
+    catch (e) { return ""; }
+  }
+
+  function buildGallery() {
+    movieGrid.innerHTML = "";
+    MOVIES.forEach((movie, idx) => {
+      const card = document.createElement("div");
+      card.className = "movie-card";
+      card.style.animationDelay = (idx * 0.05) + "s";
+      card.innerHTML = `
+        <div class="movie-poster">
+          <img src="${movie.poster}" alt="${movie.name}" loading="lazy"
+               onerror="this.style.display='none'">
+          <div class="play-icon">
+            <svg viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>
+          </div>
+        </div>
+        <div class="movie-info">
+          <div class="movie-name">${movie.name}</div>
+          <div class="movie-meta">
+            <span>${movie.year}</span>
+            <span class="dot"></span>
+            <span class="rating">
+              <svg viewBox="0 0 24 24"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
+              ${movie.rating}
+            </span>
+          </div>
+        </div>
+      `;
+      card.addEventListener("click", () => openPlayer(movie));
+      movieGrid.appendChild(card);
+    });
+  }
+
+  let hideTitleTimer = null;
+
+  function openPlayer(movie) {
+    playerTitle.textContent = movie.name;
+    movieFrame.src = movie.embed;
+
+    galleryScreen.classList.remove("show");
+    playerScreen.classList.add("show");
+    bottomNav.classList.remove("show");
+    playerTitle.classList.add("show");
+
+    clearTimeout(hideTitleTimer);
+    hideTitleTimer = setTimeout(() => {
+      playerTitle.classList.remove("show");
+    }, 2500);
+  }
+
+  backBtn.addEventListener("click", () => {
+    movieFrame.src = "about:blank";
+    playerScreen.classList.remove("show");
+    galleryScreen.classList.add("show");
+    bottomNav.classList.add("show");
+  });
+
+  /* ============================================================
+     XÁC THỰC KEY — CHỈ LOCAL
+     ============================================================ */
+  btnConfirm.addEventListener("click", () => {
+    const value = input.value.trim();
+
+    if (!value) {
+      setStatus("Vui lòng nhập key trước khi xác nhận.", "error");
+      input.focus();
+      return;
+    }
+
+    setStatus("Đang xác thực...", "ok");
+
+    setTimeout(() => {
+      if (!VALID_KEYS.includes(value)) {
+        setStatus("❌ KEY không hợp lệ. Vui lòng kiểm tra lại.", "error");
+        input.focus();
+        input.select();
+        return;
+      }
+
+      const existing = getActivation(value);
+      const now = Date.now();
+
+      if (existing && (now - existing) >= KEY_DURATION_MS) {
+        setStatus("❌ Key đã hết hạn (quá 13 tiếng từ lúc kích hoạt).", "error");
+        input.focus();
+        input.select();
+        return;
+      }
+
+      if (!existing) {
+        saveActivation(value, now);
+      } else {
+        saveActivation(value, existing);
+      }
+
+      setStatus("");
+      successBox.classList.add("show");
+      btnConfirm.disabled = true;
+      input.disabled = true;
+      input.style.opacity = "0.7";
+
+      setTimeout(() => {
+        showGallery();
+      }, 900);
+
+    }, 600);
+  });
+
+  function showGallery() {
+    keyScreen.style.transition = "opacity .5s ease, transform .5s ease";
+    keyScreen.style.opacity = "0";
+    keyScreen.style.transform = "scale(0.95)";
+    setTimeout(() => {
+      keyScreen.style.display = "none";
+      galleryScreen.classList.add("show");
+      bottomNav.classList.add("show");
+      buildGallery();
+      navHome.classList.add("active");
+      navProfile.classList.remove("active");
+    }, 500);
+  }
+
+  function isKeyStillValid(key) {
+    const activatedAt = getActivation(key);
+    if (!activatedAt) return false;
+    return (Date.now() - activatedAt) < KEY_DURATION_MS;
+  }
+
+  btnPaste.addEventListener("click", async () => {
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.readText) {
+        setStatus("Trình duyệt không hỗ trợ dán tự động.", "error");
+        input.focus();
+        return;
+      }
+      const text = await navigator.clipboard.readText();
+      if (!text || !text.trim()) {
+        setStatus("Clipboard đang trống.", "error");
+        return;
+      }
+      input.value = text.trim();
+      input.focus();
+      setStatus("Đã dán key vào ô nhập.", "ok");
+    } catch (err) {
+      setStatus("Không đọc được clipboard. Hãy Ctrl+V thủ công.", "error");
+      input.focus();
+    }
+  });
+
+  btnGet.addEventListener("click", () => {
+    window.open("https://example.com/get-key", "_blank", "noopener");
+    setStatus("Đang mở trang lấy key...", "ok");
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); btnConfirm.click(); }
+  });
+
+  input.addEventListener("input", () => {
+    if (status.textContent) {
+      status.textContent = "";
+      status.classList.remove("ok", "error");
+    }
+  });
+
+  function setActiveNav(tab) {
+    navHome.classList.toggle("active", tab === "home");
+    navProfile.classList.toggle("active", tab === "profile");
+  }
+
+  navHome.addEventListener("click", () => {
+    profileOverlay.classList.remove("show");
+    setActiveNav("home");
+  });
+
+  navProfile.addEventListener("click", () => {
+    setActiveNav("profile");
+    openProfile();
+  });
+
+  closeProfile.addEventListener("click", () => {
+    profileOverlay.classList.remove("show");
+    setActiveNav("home");
+  });
+
+  profileOverlay.addEventListener("click", (e) => {
+    if (e.target === profileOverlay) {
+      profileOverlay.classList.remove("show");
+      setActiveNav("home");
+    }
+  });
+
+  function openProfile() {
+    const key = getCurrentKey();
+    const activatedAt = getActivation(key);
+
+    profileKey.textContent = key || "—";
+
+    if (activatedAt) {
+      profileVnTime.textContent = "Kích hoạt: " + formatVNTime(activatedAt)
+        + " · Hết hạn: " + formatVNTime(activatedAt + KEY_DURATION_MS);
+    } else {
+      profileVnTime.textContent = "Chưa kích hoạt";
+    }
+
+    profileOverlay.classList.add("show");
+    startCountdown(activatedAt + KEY_DURATION_MS);
+  }
+
+  function startCountdown(expire) {
+    if (countdownInterval) clearInterval(countdownInterval);
+
+    function tick() {
+      let remain = expire - Date.now();
+      if (remain < 0) remain = 0;
+
+      const d = Math.floor(remain / 86400000);
+      const h = Math.floor((remain % 86400000) / 3600000);
+      const m = Math.floor((remain % 3600000) / 60000);
+      const s = Math.floor((remain % 60000) / 1000);
+
+      cdDay.textContent  = String(d).padStart(2, "0");
+      cdHour.textContent = String(h).padStart(2, "0");
+      cdMin.textContent  = String(m).padStart(2, "0");
+      cdSec.textContent  = String(s).padStart(2, "0");
+
+      if (remain <= 0) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
+    }
+
+    tick();
+    countdownInterval = setInterval(tick, 1000);
+  }
+
+  logoutBtn.addEventListener("click", () => {
+    if (!confirm("Bạn có chắc muốn đăng xuất key?")) return;
+
+    try { localStorage.removeItem("ff_current_key"); } catch (e) {}
+
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+
+    profileOverlay.classList.remove("show");
+    bottomNav.classList.remove("show");
+    galleryScreen.classList.remove("show");
+    playerScreen.classList.remove("show");
+    movieFrame.src = "about:blank";
+
+    keyScreen.style.display = "flex";
+    keyScreen.style.opacity = "1";
+    keyScreen.style.transform = "scale(1)";
+    input.value = "";
+    input.disabled = false;
+    input.style.opacity = "1";
+    btnConfirm.disabled = false;
+    btnPaste.disabled = false;
+    successBox.classList.remove("show");
+    setStatus("Đã đăng xuất key. Vui lòng nhập lại.", "ok");
+  });
+
+  try {
+    const currentKey = getCurrentKey();
+    if (currentKey && VALID_KEYS.includes(currentKey)) {
+      if (isKeyStillValid(currentKey)) {
+        input.value = currentKey;
+        setStatus("Key đang hoạt động · tự động đăng nhập", "ok");
+        successBox.classList.add("show");
+        btnConfirm.disabled = true;
+        input.disabled = true;
+        input.style.opacity = "0.7";
+        setTimeout(() => showGallery(), 900);
+      } else {
+        localStorage.removeItem("ff_current_key");
+        setStatus("Key trước đã hết hạn 13 tiếng. Vui lòng dùng key mới.", "error");
+      }
+    }
+  } catch (e) {}
+
+})();
+</script>
+</body>
+</html>
