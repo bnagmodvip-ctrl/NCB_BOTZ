@@ -33,6 +33,69 @@
     50%     { transform:translate(30px,-25px) scale(1.08); }
   }
 
+  /* NOTICE */
+  .notice-banner {
+    position:fixed;
+    top:16px; left:50%;
+    transform:translateX(-50%) translateY(-120px);
+    background:linear-gradient(135deg,#ff5a9a,#d6336c);
+    color:#fff;
+    padding:12px 16px 12px 20px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    font-size:13px;
+    font-weight:800;
+    letter-spacing:.10em;
+    text-transform:uppercase;
+    box-shadow:0 10px 30px rgba(214,51,108,0.5), 0 0 0 1.5px rgba(255,255,255,0.2) inset;
+    z-index:300;
+    opacity:0;
+    transition:transform .5s cubic-bezier(.16,1,.3,1), opacity .4s ease;
+    max-width:calc(100vw - 32px);
+  }
+  .notice-banner.show {
+    transform:translateX(-50%) translateY(0);
+    opacity:1;
+  }
+  .notice-banner-icon {
+    width:26px; height:26px;
+    background:rgba(255,255,255,0.22);
+    border-radius:50%;
+    display:grid; place-items:center;
+    flex-shrink:0;
+    animation:noticePulse 1.8s ease-in-out infinite;
+  }
+  @keyframes noticePulse {
+    0%,100% { box-shadow:0 0 0 0 rgba(255,255,255,0.4); }
+    50%     { box-shadow:0 0 0 8px rgba(255,255,255,0); }
+  }
+  .notice-banner-icon i { font-size:13px; color:#fff; }
+  .notice-banner-text {
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .notice-banner-close {
+    width:28px; height:28px;
+    background:rgba(255,255,255,0.25);
+    border:none;
+    border-radius:50%;
+    color:#fff;
+    cursor:pointer;
+    display:grid; place-items:center;
+    flex-shrink:0;
+    font-size:14px;
+    transition:all .2s ease;
+  }
+  .notice-banner-close:hover {
+    background:#fff;
+    color:#d6336c;
+    transform:rotate(90deg) scale(1.1);
+  }
+
+  /* KEY SCREEN */
   .menu {
     position:relative; z-index:2;
     width:min(520px, 92vw);
@@ -79,6 +142,7 @@
     background:inherit; filter:blur(18px); opacity:.55; z-index:-1;
     animation:rotate-border 6s linear infinite;
   }
+  .input-wrap.disabled { opacity:.5; pointer-events:none; }
 
   #keyInput {
     width:100%; padding:20px 22px; border-radius:14px; border:none; outline:none;
@@ -114,17 +178,17 @@
     transition:transform .4s cubic-bezier(.65,0,.35,1);
     z-index:-1;
   }
-  .btn:hover {
+  .btn:hover:not(:disabled) {
     color:#0a0a0a; border-color:#fff; transform:translateY(-2px);
     box-shadow:0 10px 28px rgba(255,255,255,.18),
                0 0 0 1px rgba(255,255,255,.5) inset;
   }
-  .btn:hover::before { transform:scaleY(1); }
-  .btn:active { transform:translateY(0) scale(.98); }
+  .btn:hover:not(:disabled)::before { transform:scaleY(1); }
+  .btn:active:not(:disabled) { transform:translateY(0) scale(.98); }
   .btn:disabled { opacity:.5; cursor:not-allowed; }
   .btn.confirm { background:#fff; color:#0a0a0a; border-color:#fff; }
   .btn.confirm::before { background:#0a0a0a; }
-  .btn.confirm:hover {
+  .btn.confirm:hover:not(:disabled) {
     color:#fff; border-color:#0a0a0a;
     box-shadow:0 10px 28px rgba(0,0,0,.6),
                0 0 0 1px rgba(255,255,255,.6) inset;
@@ -137,6 +201,7 @@
   }
   .status.ok    { color:#7CFFB2; }
   .status.error { color:#FF7C7C; }
+  .status.warn  { color:#FFB84D; }
 
   .success {
     display:none; text-align:center; padding:20px;
@@ -149,10 +214,201 @@
     font-size:18px; color:#7CFFB2; letter-spacing:.1em;
     margin-bottom:8px; font-weight:800;
   }
-  .success p {
-    font-size:12px; color:rgba(255,255,255,.65); letter-spacing:.06em;
+  .success p { font-size:12px; color:rgba(255,255,255,.65); letter-spacing:.06em; }
+
+  /* LOCK */
+  .lock-overlay {
+    position:fixed; inset:0;
+    background:rgba(0,0,0,0.85);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    z-index:500;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    animation:fadeIn .4s ease;
+  }
+  .lock-overlay.show { display:flex; }
+  .lock-box {
+    width:100%;
+    max-width:400px;
+    background:linear-gradient(180deg,#2a0a0f 0%,#150508 100%);
+    border:2px solid #ff3a4a;
+    border-radius:24px;
+    padding:40px 30px 32px;
+    box-shadow:0 30px 80px rgba(255,58,74,0.4);
+    text-align:center;
+    animation:profileIn .5s cubic-bezier(.16,1,.3,1);
+    position:relative;
+    overflow:hidden;
+  }
+  @keyframes profileIn {
+    from { opacity:0; transform:scale(.9) translateY(20px); }
+    to   { opacity:1; transform:scale(1) translateY(0); }
+  }
+  .lock-box::before {
+    content:"";
+    position:absolute;
+    top:-100px; right:-100px;
+    width:250px; height:250px;
+    background:radial-gradient(circle, rgba(255,58,74,0.25), transparent 70%);
+    border-radius:50%;
+  }
+  .lock-icon {
+    width:80px; height:80px;
+    margin:0 auto 20px;
+    background:linear-gradient(135deg,#ff3a4a,#a01020);
+    border-radius:50%;
+    display:grid; place-items:center;
+    box-shadow:0 10px 30px rgba(255,58,74,0.5);
+    animation:lockPulse 2s ease-in-out infinite;
+  }
+  @keyframes lockPulse {
+    0%,100% { box-shadow:0 10px 30px rgba(255,58,74,0.5); }
+    50%     { box-shadow:0 10px 40px rgba(255,58,74,0.9); }
+  }
+  .lock-icon i { font-size:34px; color:#fff; }
+  .lock-title {
+    font-size:20px; color:#ff5a6a; font-weight:900;
+    letter-spacing:.10em; margin-bottom:10px; text-transform:uppercase;
+  }
+  .lock-sub {
+    font-size:13px; color:rgba(255,255,255,.65);
+    line-height:1.7; margin-bottom:24px;
+  }
+  .lock-timer-label {
+    font-size:11px; letter-spacing:.20em; color:#ff8888;
+    text-transform:uppercase; font-weight:700; margin-bottom:12px;
+  }
+  .lock-timer {
+    display:flex; justify-content:center; gap:10px; margin-bottom:18px;
+  }
+  .lock-timer-block {
+    background:rgba(255,58,74,.15);
+    border:2px solid rgba(255,58,74,.4);
+    border-radius:12px; padding:12px 18px; min-width:76px;
+  }
+  .lock-timer-num {
+    font-size:28px; font-weight:900; color:#ff5a6a;
+    font-family:'Courier New',monospace; line-height:1; margin-bottom:2px;
+  }
+  .lock-timer-unit {
+    font-size:9.5px; letter-spacing:.14em; color:#ff8888;
+    text-transform:uppercase; font-weight:700;
+  }
+  .lock-vn-time {
+    font-size:11px; color:rgba(255,136,136,.8);
+    font-family:'Courier New',monospace; letter-spacing:.05em; margin-top:12px;
   }
 
+  /* EXPIRED OVERLAY */
+  .expired-overlay {
+    position:fixed; inset:0;
+    background:rgba(0,0,0,0.88);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    z-index:600;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    animation:fadeIn .35s ease;
+  }
+  .expired-overlay.show { display:flex; }
+  .expired-box {
+    width:100%;
+    max-width:380px;
+    background:linear-gradient(180deg,#2a0a0f 0%,#150508 100%);
+    border:2px solid #ff3a4a;
+    border-radius:22px;
+    padding:36px 28px 26px;
+    box-shadow:0 30px 80px rgba(255,58,74,0.5);
+    text-align:center;
+    animation:profileIn .5s cubic-bezier(.16,1,.3,1);
+    position:relative;
+    overflow:hidden;
+  }
+  .expired-box::before {
+    content:"";
+    position:absolute;
+    top:-100px; right:-100px;
+    width:250px; height:250px;
+    background:radial-gradient(circle, rgba(255,58,74,0.3), transparent 70%);
+    border-radius:50%;
+  }
+  .expired-icon {
+    width:70px; height:70px;
+    margin:0 auto 18px;
+    background:linear-gradient(135deg,#ff3a4a,#a01020);
+    border-radius:50%;
+    display:grid; place-items:center;
+    box-shadow:0 10px 30px rgba(255,58,74,0.6);
+    animation:expiredPulse 1.8s ease-in-out infinite;
+    position:relative;
+    z-index:1;
+  }
+  @keyframes expiredPulse {
+    0%,100% { transform:scale(1); box-shadow:0 10px 30px rgba(255,58,74,0.6); }
+    50%     { transform:scale(1.06); box-shadow:0 12px 45px rgba(255,58,74,1); }
+  }
+  .expired-icon i { font-size:32px; color:#fff; }
+  .expired-title {
+    font-size:18px; color:#ff5a6a; font-weight:900;
+    letter-spacing:.10em; margin-bottom:14px; text-transform:uppercase;
+    position:relative; z-index:1;
+  }
+  .expired-key-name {
+    font-size:14px;
+    color:#fff;
+    font-family:'Courier New',monospace;
+    font-weight:800;
+    padding:12px 16px;
+    background:rgba(255,58,74,.18);
+    border:1.5px solid rgba(255,58,74,.5);
+    border-radius:12px;
+    margin-bottom:14px;
+    word-break:break-all;
+    position:relative;
+    z-index:1;
+  }
+  .expired-msg {
+    font-size:13px; color:rgba(255,255,255,.75);
+    line-height:1.7; margin-bottom:22px;
+    position:relative; z-index:1;
+  }
+  .expired-btn {
+    padding:12px 28px;
+    border-radius:12px;
+    border:none;
+    background:linear-gradient(135deg,#ff5a9a,#d6336c);
+    color:#fff;
+    font-size:12.5px;
+    font-weight:800;
+    letter-spacing:.15em;
+    text-transform:uppercase;
+    cursor:pointer;
+    font-family:inherit;
+    transition:all .25s ease;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    min-width:130px;
+    box-shadow:0 6px 20px rgba(214,51,108,0.5);
+    position:relative;
+    z-index:1;
+    margin:0 auto;
+  }
+  .expired-btn:hover {
+    transform:translateY(-2px);
+    box-shadow:0 10px 30px rgba(214,51,108,0.8);
+  }
+  .expired-btn:active {
+    transform:translateY(0) scale(.97);
+  }
+
+  /* GALLERY */
   .gallery-screen {
     position:fixed; inset:0;
     background:linear-gradient(135deg,#ffe4ec 0%,#fff5f8 35%,#ffd6e4 100%);
@@ -164,7 +420,6 @@
   }
   .gallery-screen.show { display:block; }
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-
   .gallery-screen::before {
     content:"";
     position:fixed; inset:0;
@@ -173,32 +428,25 @@
       radial-gradient(circle at 85% 80%, rgba(255,182,193,0.25), transparent 45%);
     pointer-events:none;
   }
-
   .gallery-header {
     position:relative; z-index:2;
-    max-width:1100px; margin:0 auto 40px;
-    text-align:center;
+    max-width:1100px; margin:0 auto 40px; text-align:center;
   }
   .gallery-header h1 {
-    font-size:34px; font-weight:900;
-    letter-spacing:.20em;
-    color:#d6336c;
-    text-transform:uppercase;
+    font-size:34px; font-weight:900; letter-spacing:.20em;
+    color:#d6336c; text-transform:uppercase;
     text-shadow:0 2px 20px rgba(214,51,108,0.15);
     margin-bottom:8px;
   }
   .gallery-header p {
     font-size:12px; letter-spacing:.30em;
-    color:#b8477a;
-    text-transform:uppercase;
+    color:#b8477a; text-transform:uppercase;
   }
   .gallery-header::after {
-    content:"";
-    display:block; width:60px; height:2px;
+    content:""; display:block; width:60px; height:2px;
     background:linear-gradient(90deg,transparent,#ff69b4,transparent);
     margin:16px auto 0;
   }
-
   .movie-grid {
     position:relative; z-index:2;
     max-width:1100px; margin:0 auto;
@@ -206,13 +454,9 @@
     grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));
     gap:28px;
   }
-
   .movie-card {
-    background:#fff;
-    border-radius:16px;
-    overflow:hidden;
-    cursor:pointer;
-    position:relative;
+    background:#fff; border-radius:16px; overflow:hidden;
+    cursor:pointer; position:relative;
     box-shadow:0 8px 24px rgba(214,51,108,0.10), 0 2px 6px rgba(0,0,0,0.04);
     border:2px solid #ffe4ec;
     transition:transform .35s cubic-bezier(.16,1,.3,1),
@@ -227,66 +471,41 @@
   .movie-card:nth-child(2) { animation-delay:0.10s; }
   .movie-card:nth-child(3) { animation-delay:0.15s; }
   .movie-card:nth-child(4) { animation-delay:0.20s; }
-  .movie-card:nth-child(5) { animation-delay:0.25s; }
-  .movie-card:nth-child(6) { animation-delay:0.30s; }
-  .movie-card:nth-child(7) { animation-delay:0.35s; }
-  .movie-card:nth-child(8) { animation-delay:0.40s; }
-  .movie-card:nth-child(9) { animation-delay:0.45s; }
-
   .movie-card:hover {
     transform:translateY(-8px) scale(1.02);
     box-shadow:0 20px 40px rgba(214,51,108,0.25);
     border-color:#ff69b4;
   }
   .movie-card:hover .movie-poster::after { opacity:1; }
-  .movie-card:hover .play-icon {
-    transform:scale(1) rotate(0deg);
-    opacity:1;
-  }
-
+  .movie-card:hover .play-icon { transform:scale(1) rotate(0deg); opacity:1; }
   .movie-poster {
-    position:relative;
-    width:100%;
-    aspect-ratio:2/3;
-    background:linear-gradient(135deg,#ffd6e4,#ffe4ec);
-    overflow:hidden;
+    position:relative; width:100%; aspect-ratio:2/3;
+    background:linear-gradient(135deg,#ffd6e4,#ffe4ec); overflow:hidden;
   }
   .movie-poster::after {
-    content:"";
-    position:absolute; inset:0;
+    content:""; position:absolute; inset:0;
     background:linear-gradient(180deg, transparent 40%, rgba(214,51,108,0.6) 100%);
-    opacity:0;
-    transition:opacity .3s ease;
+    opacity:0; transition:opacity .3s ease;
   }
   .movie-poster img {
-    width:100%; height:100%;
-    object-fit:cover;
-    display:block;
+    width:100%; height:100%; object-fit:cover; display:block;
     transition:transform .5s ease;
   }
   .movie-card:hover .movie-poster img { transform:scale(1.1); }
-
   .play-icon {
     position:absolute; top:50%; left:50%;
-    width:56px; height:56px;
-    margin:-28px 0 0 -28px;
-    background:rgba(255,255,255,0.95);
-    border-radius:50%;
+    width:56px; height:56px; margin:-28px 0 0 -28px;
+    background:rgba(255,255,255,0.95); border-radius:50%;
     display:grid; place-items:center;
-    transform:scale(0.5) rotate(-90deg);
-    opacity:0;
+    transform:scale(0.5) rotate(-90deg); opacity:0;
     transition:transform .35s cubic-bezier(.16,1,.3,1), opacity .3s;
-    z-index:3;
-    box-shadow:0 6px 20px rgba(214,51,108,0.4);
+    z-index:3; box-shadow:0 6px 20px rgba(214,51,108,0.4);
   }
   .play-icon svg { width:22px; height:22px; fill:#d6336c; margin-left:3px; }
-
   .movie-info { padding:16px 18px 18px; }
   .movie-name {
-    font-size:15px; font-weight:800;
-    color:#2d1a24;
-    letter-spacing:.02em;
-    margin-bottom:6px;
+    font-size:15px; font-weight:800; color:#2d1a24;
+    letter-spacing:.02em; margin-bottom:6px;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
   .movie-meta {
@@ -294,16 +513,14 @@
     font-size:11px; color:#b8477a;
     letter-spacing:.08em; text-transform:uppercase;
   }
-  .movie-meta .dot {
-    width:3px; height:3px; border-radius:50%;
-    background:#ffb6c1;
-  }
+  .movie-meta .dot { width:3px; height:3px; border-radius:50%; background:#ffb6c1; }
   .movie-meta .rating {
     display:flex; align-items:center; gap:2px;
     color:#ffaa00; font-weight:700;
   }
   .movie-meta .rating svg { width:11px; height:11px; fill:#ffaa00; }
 
+  /* PLAYER */
   .player-screen {
     position:fixed; inset:0;
     background:rgba(0,0,0,0.96);
@@ -314,62 +531,44 @@
     animation:fadeIn .4s ease;
   }
   .player-screen.show { display:flex; }
-
   .player-box {
     position:relative;
-    width:92vw;
-    max-width:1200px;
-    aspect-ratio:16/9;
-    background:#000;
-    border-radius:16px;
-    overflow:hidden;
+    width:92vw; max-width:1200px;
+    aspect-ratio:16/9; background:#000;
+    border-radius:16px; overflow:hidden;
     box-shadow:0 40px 120px rgba(255,105,180,0.25);
   }
-
   .player-box iframe {
-    width:100%; height:100%;
-    display:block;
-    border:none;
-    background:#000;
+    width:100%; height:100%; display:block;
+    border:none; background:#000;
   }
-
   .player-title {
     position:absolute; top:0; left:0; right:0;
     padding:24px 90px 24px 80px;
     background:linear-gradient(180deg, rgba(0,0,0,0.85), transparent);
-    color:#fff;
-    font-size:18px; font-weight:800;
-    letter-spacing:.05em;
-    pointer-events:none;
-    z-index:5;
-    opacity:0;
-    transition:opacity .3s ease;
+    color:#fff; font-size:18px; font-weight:800;
+    letter-spacing:.05em; pointer-events:none; z-index:5;
+    opacity:0; transition:opacity .3s ease;
   }
   .player-title.show { opacity:1; }
-
   .back-btn {
     position:absolute; top:18px; left:18px;
-    width:44px; height:44px;
-    border-radius:50%;
+    width:44px; height:44px; border-radius:50%;
     background:rgba(255,255,255,0.12);
     border:1.5px solid rgba(255,255,255,0.3);
-    color:#fff;
-    display:grid; place-items:center;
-    cursor:pointer;
-    z-index:10;
-    backdrop-filter:blur(10px);
+    color:#fff; display:grid; place-items:center;
+    cursor:pointer; z-index:10; backdrop-filter:blur(10px);
     transition:all .25s ease;
   }
   .back-btn:hover {
-    background:#ff69b4;
-    border-color:#ff69b4;
-    transform:scale(1.08);
+    background:#ff69b4; border-color:#ff69b4; transform:scale(1.08);
   }
   .back-btn svg {
     width:20px; height:20px; stroke:#fff; fill:none; stroke-width:2.5;
     stroke-linecap:round; stroke-linejoin:round;
   }
 
+  /* BOTTOM NAV */
   .bottom-nav {
     position:fixed;
     bottom:0; left:0; right:0;
@@ -378,262 +577,153 @@
     backdrop-filter:blur(24px) saturate(180%);
     -webkit-backdrop-filter:blur(24px) saturate(180%);
     border-top:1px solid rgba(255,105,180,0.25);
-    display:none;
-    z-index:60;
+    display:none; z-index:60;
     box-shadow:0 -10px 30px rgba(214,51,108,0.08);
     padding-bottom:env(safe-area-inset-bottom, 0);
   }
   .bottom-nav.show { display:flex; }
-
   .bottom-nav-inner {
-    max-width:1100px;
-    margin:0 auto;
-    width:100%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    gap:60px;
-    padding:0 20px;
+    max-width:1100px; margin:0 auto; width:100%;
+    display:flex; justify-content:center; align-items:center;
+    gap:60px; padding:0 20px;
   }
-
   .nav-btn {
-    background:transparent;
-    border:none;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:4px;
-    cursor:pointer;
-    padding:10px 22px;
-    border-radius:14px;
-    color:#b8477a;
-    transition:all .25s ease;
-    font-family:inherit;
-    position:relative;
+    background:transparent; border:none;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:4px; cursor:pointer; padding:10px 22px;
+    border-radius:14px; color:#b8477a;
+    transition:all .25s ease; font-family:inherit; position:relative;
   }
   .nav-btn i { font-size:20px; transition:transform .25s ease; }
   .nav-btn span {
-    font-size:10.5px;
-    font-weight:700;
-    letter-spacing:.10em;
-    text-transform:uppercase;
+    font-size:10.5px; font-weight:700;
+    letter-spacing:.10em; text-transform:uppercase;
   }
-  .nav-btn:hover {
-    color:#d6336c;
-    background:rgba(255,105,180,0.10);
-  }
+  .nav-btn:hover { color:#d6336c; background:rgba(255,105,180,0.10); }
   .nav-btn:hover i { transform:translateY(-2px) scale(1.1); }
   .nav-btn.active { color:#d6336c; }
   .nav-btn.active::after {
-    content:"";
-    position:absolute;
-    bottom:2px;
-    left:50%;
-    transform:translateX(-50%);
-    width:20px;
-    height:3px;
-    background:linear-gradient(90deg,#ff69b4,#d6336c);
-    border-radius:2px;
+    content:""; position:absolute; bottom:2px; left:50%;
+    transform:translateX(-50%); width:20px; height:3px;
+    background:linear-gradient(90deg,#ff69b4,#d6336c); border-radius:2px;
   }
 
+  /* PROFILE */
   .profile-overlay {
     position:fixed; inset:0;
     background:rgba(0,0,0,0.55);
     backdrop-filter:blur(8px);
     -webkit-backdrop-filter:blur(8px);
     z-index:200;
-    display:none;
-    align-items:center;
-    justify-content:center;
-    padding:20px;
-    animation:fadeIn .3s ease;
+    display:none; align-items:center; justify-content:center;
+    padding:20px; animation:fadeIn .3s ease;
   }
   .profile-overlay.show { display:flex; }
-
   .profile-box {
-    width:100%;
-    max-width:420px;
+    width:100%; max-width:420px;
     background:linear-gradient(180deg,#fff 0%,#fff5f8 100%);
-    border-radius:24px;
-    padding:36px 30px 28px;
+    border-radius:24px; padding:36px 30px 28px;
     box-shadow:0 30px 80px rgba(214,51,108,0.35);
     border:2px solid #ffe4ec;
     animation:profileIn .45s cubic-bezier(.16,1,.3,1);
-    text-align:center;
-    position:relative;
-    overflow:hidden;
+    text-align:center; position:relative; overflow:hidden;
   }
-  @keyframes profileIn {
-    from { opacity:0; transform:scale(.9) translateY(20px); }
-    to   { opacity:1; transform:scale(1) translateY(0); }
-  }
-
   .profile-box::before {
-    content:"";
-    position:absolute;
-    top:-80px; right:-80px;
-    width:200px; height:200px;
+    content:""; position:absolute;
+    top:-80px; right:-80px; width:200px; height:200px;
     background:radial-gradient(circle, rgba(255,105,180,0.25), transparent 70%);
     border-radius:50%;
   }
   .profile-box::after {
-    content:"";
-    position:absolute;
-    bottom:-80px; left:-80px;
-    width:200px; height:200px;
+    content:""; position:absolute;
+    bottom:-80px; left:-80px; width:200px; height:200px;
     background:radial-gradient(circle, rgba(255,182,193,0.25), transparent 70%);
     border-radius:50%;
   }
-
   .profile-icon {
-    width:80px; height:80px;
-    margin:0 auto 18px;
+    width:80px; height:80px; margin:0 auto 18px;
     background:linear-gradient(135deg,#ff69b4,#d6336c);
-    border-radius:50%;
-    display:grid; place-items:center;
+    border-radius:50%; display:grid; place-items:center;
     box-shadow:0 10px 30px rgba(214,51,108,0.35);
-    position:relative;
-    z-index:1;
+    position:relative; z-index:1;
   }
   .profile-icon i { font-size:34px; color:#fff; }
-
   .profile-title {
-    font-size:13px;
-    letter-spacing:.20em;
-    color:#b8477a;
-    text-transform:uppercase;
-    font-weight:700;
-    margin-bottom:8px;
-    position:relative;
-    z-index:1;
+    font-size:13px; letter-spacing:.20em;
+    color:#b8477a; text-transform:uppercase;
+    font-weight:700; margin-bottom:8px;
+    position:relative; z-index:1;
   }
-
   .profile-key {
-    font-size:15px;
-    font-weight:800;
-    color:#2d1a24;
+    font-size:15px; font-weight:800; color:#2d1a24;
     font-family:'Courier New',monospace;
-    letter-spacing:.02em;
-    padding:14px 16px;
-    background:#ffe4ec;
-    border:1.5px solid #ffb6c1;
-    border-radius:12px;
-    margin-bottom:14px;
-    word-break:break-all;
-    position:relative;
-    z-index:1;
+    letter-spacing:.02em; padding:14px 16px;
+    background:#ffe4ec; border:1.5px solid #ffb6c1;
+    border-radius:12px; margin-bottom:14px;
+    word-break:break-all; position:relative; z-index:1;
   }
-
   .profile-vn-time {
-    font-size:11px;
-    color:#b8477a;
+    font-size:11px; color:#b8477a;
     font-family:'Courier New',monospace;
-    letter-spacing:.05em;
-    margin-bottom:20px;
-    position:relative;
-    z-index:1;
+    letter-spacing:.05em; margin-bottom:20px;
+    position:relative; z-index:1; line-height:1.6;
   }
-
   .profile-divider {
     height:1px;
     background:linear-gradient(90deg,transparent,#ffb6c1,transparent);
-    margin:20px 0;
-    position:relative;
-    z-index:1;
+    margin:20px 0; position:relative; z-index:1;
   }
-
   .countdown-label {
-    font-size:11px;
-    letter-spacing:.20em;
-    color:#b8477a;
-    text-transform:uppercase;
-    font-weight:700;
-    margin-bottom:10px;
-    position:relative;
-    z-index:1;
+    font-size:11px; letter-spacing:.20em;
+    color:#b8477a; text-transform:uppercase;
+    font-weight:700; margin-bottom:10px;
+    position:relative; z-index:1;
   }
-
   .countdown-timer {
-    display:flex;
-    justify-content:center;
-    gap:10px;
-    margin-bottom:22px;
-    position:relative;
-    z-index:1;
+    display:flex; justify-content:center; gap:10px;
+    margin-bottom:22px; position:relative; z-index:1;
   }
-
   .countdown-block {
     background:linear-gradient(135deg,#fff,#ffe4ec);
-    border:2px solid #ffb6c1;
-    border-radius:12px;
-    padding:10px 14px;
-    min-width:64px;
+    border:2px solid #ffb6c1; border-radius:12px;
+    padding:10px 14px; min-width:64px;
     box-shadow:0 4px 12px rgba(214,51,108,0.10);
   }
   .countdown-num {
-    font-size:24px;
-    font-weight:900;
-    color:#d6336c;
+    font-size:24px; font-weight:900; color:#d6336c;
     font-family:'Courier New',monospace;
-    line-height:1;
-    margin-bottom:2px;
+    line-height:1; margin-bottom:2px;
   }
   .countdown-unit {
-    font-size:9.5px;
-    letter-spacing:.14em;
-    color:#b8477a;
-    text-transform:uppercase;
-    font-weight:700;
+    font-size:9.5px; letter-spacing:.14em;
+    color:#b8477a; text-transform:uppercase; font-weight:700;
   }
-
   .logout-btn {
-    width:100%;
-    padding:15px;
-    border-radius:14px;
-    border:2px solid #ffb6c1;
-    background:#fff;
-    color:#d6336c;
-    font-size:13px;
-    font-weight:800;
-    letter-spacing:.12em;
-    text-transform:uppercase;
-    cursor:pointer;
-    transition:all .25s ease;
-    font-family:inherit;
-    position:relative;
-    z-index:1;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:8px;
+    width:100%; padding:15px; border-radius:14px;
+    border:2px solid #ffb6c1; background:#fff;
+    color:#d6336c; font-size:13px; font-weight:800;
+    letter-spacing:.12em; text-transform:uppercase;
+    cursor:pointer; transition:all .25s ease;
+    font-family:inherit; position:relative; z-index:1;
+    display:flex; align-items:center; justify-content:center; gap:8px;
   }
   .logout-btn:hover {
     background:linear-gradient(135deg,#d6336c,#ff69b4);
-    color:#fff;
-    border-color:#d6336c;
+    color:#fff; border-color:#d6336c;
     transform:translateY(-2px);
     box-shadow:0 10px 25px rgba(214,51,108,0.4);
   }
-  .logout-btn:active { transform:translateY(0) scale(.98); }
-
   .close-profile {
-    position:absolute;
-    top:14px; right:14px;
-    width:36px; height:36px;
-    border-radius:50%;
+    position:absolute; top:14px; right:14px;
+    width:36px; height:36px; border-radius:50%;
     background:rgba(255,255,255,0.6);
-    border:1.5px solid #ffb6c1;
-    color:#d6336c;
-    cursor:pointer;
-    display:grid; place-items:center;
-    z-index:10;
-    transition:all .2s ease;
+    border:1.5px solid #ffb6c1; color:#d6336c;
+    cursor:pointer; display:grid; place-items:center;
+    z-index:10; transition:all .2s ease;
   }
   .close-profile:hover {
-    background:#d6336c;
-    color:#fff;
-    transform:rotate(90deg);
+    background:#d6336c; color:#fff; transform:rotate(90deg);
   }
   .close-profile i { font-size:16px; }
 
@@ -650,6 +740,13 @@
     .nav-btn { padding:8px 16px; }
     .countdown-block { min-width:54px; padding:8px 10px; }
     .countdown-num { font-size:20px; }
+    .lock-timer-block { min-width:66px; padding:10px 14px; }
+    .lock-timer-num { font-size:22px; }
+    .notice-banner { font-size:11px; padding:10px 12px 10px 14px; }
+    .expired-box { padding:30px 22px 22px; }
+    .expired-title { font-size:16px; }
+    .expired-icon { width:60px; height:60px; }
+    .expired-icon i { font-size:28px; }
   }
 </style>
 </head>
@@ -658,13 +755,23 @@
 <div class="orb one"></div>
 <div class="orb two"></div>
 
+<div class="notice-banner" id="noticeBanner">
+  <div class="notice-banner-icon">
+    <i class="fa-solid fa-bullhorn"></i>
+  </div>
+  <div class="notice-banner-text">CỦA WEBSITE X</div>
+  <button class="notice-banner-close" id="noticeClose" aria-label="Đóng thông báo">
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+</div>
+
 <main class="menu" id="keyScreen">
   <div class="header">
     <h1>NHẬP KEY XÁC MINH</h1>
     <p>NHẬP KEY ĐỂ XÁC THỰC</p>
   </div>
 
-  <div class="input-wrap">
+  <div class="input-wrap" id="inputWrap">
     <input id="keyInput" type="text" placeholder="NHẬP KEY CỦA BẠN" autocomplete="off" spellcheck="false" />
   </div>
 
@@ -681,6 +788,44 @@
     <p>Key hợp lệ — đang mở thư viện phim...</p>
   </div>
 </main>
+
+<div class="lock-overlay" id="lockOverlay">
+  <div class="lock-box">
+    <div class="lock-icon"><i class="fa-solid fa-lock"></i></div>
+    <div class="lock-title">BỊ KHÓA TẠM THỜI</div>
+    <div class="lock-sub" id="lockSub">Bạn đã nhập sai 10 lần.<br>Vui lòng chờ hết thời gian khóa.</div>
+    <div class="lock-timer-label">Thời gian còn lại</div>
+    <div class="lock-timer">
+      <div class="lock-timer-block">
+        <div class="lock-timer-num" id="lockMin">10</div>
+        <div class="lock-timer-unit">Phút</div>
+      </div>
+      <div class="lock-timer-block">
+        <div class="lock-timer-num" id="lockSec">00</div>
+        <div class="lock-timer-unit">Giây</div>
+      </div>
+    </div>
+    <div class="lock-vn-time" id="lockVnTime">Mở khóa lúc: —</div>
+  </div>
+</div>
+
+<!-- EXPIRED OVERLAY -->
+<div class="expired-overlay" id="expiredOverlay">
+  <div class="expired-box">
+    <div class="expired-icon">
+      <i class="fa-solid fa-circle-exclamation"></i>
+    </div>
+    <div class="expired-title">KEY ĐÃ HẾT HẠN</div>
+    <div class="expired-key-name" id="expiredKeyName">—</div>
+    <div class="expired-msg">
+      Key đã hết hạn.<br>Vui lòng nhập key khác để tiếp tục.
+    </div>
+    <button class="expired-btn" id="expiredOk">
+      <i class="fa-solid fa-check"></i>
+      ĐÃ RÕ
+    </button>
+  </div>
+</div>
 
 <div class="gallery-screen" id="galleryScreen">
   <div class="gallery-header">
@@ -753,9 +898,6 @@
 (function () {
   "use strict";
 
-  /* ============================================================
-     DANH SÁCH KEY HỢP LỆ — BẠN TỰ THÊM/SỬA/XÓA TẠI ĐÂY
-     ============================================================ */
   const VALID_KEYS = [
     "NCB_XNHAU_291030_27",
     "NCB_XNHAU_03YU0_2P",
@@ -765,49 +907,35 @@
     "KEY_MAU_2"
   ];
 
-  /* Thời hạn key: 13 tiếng */
   const KEY_DURATION_MS = 13 * 60 * 60 * 1000;
+  const MAX_WRONG       = 10;
+  const LOCK_DURATION_MS = 10 * 60 * 1000;
 
-  /* ============================================================
-     DANH SÁCH PHIM
-     ============================================================ */
+  const LS_WRONG   = "ff_wrong_count";
+  const LS_LOCK    = "ff_lock_until";
+  const LS_KEYS    = "ff_keys_db";
+  const LS_CURRENT = "ff_current_key";
+  const LS_NOTICE  = "ff_notice_dismissed";
+
   const MOVIES = [
-    {
-      name: "EM HỌC SINH (1)",
-      year: "2024",
-      rating: "9.0",
+    { name: "EM HỌC SINH (1)", year: "2024", rating: "9.0",
       poster: "https://picsum.photos/seed/emhocsinh1/400/600",
-      embed: "https://xnhau.pink/embed/254778"
-    },
-    {
-      name: "cal sex",
-      year: "2024",
-      rating: "8.9",
+      embed: "https://xnhau.pink/embed/254778" },
+    { name: "cal sex", year: "2024", rating: "8.9",
       poster: "https://picsum.photos/seed/calsex/400/600",
-      embed: "https://xnhau.pink/embed/257961"
-    },
-    {
-      name: "EM TÔI ĐÓ (1)",
-      year: "2024",
-      rating: "9.0",
+      embed: "https://xnhau.pink/embed/257961" },
+    { name: "EM TÔI ĐÓ (1)", year: "2024", rating: "9.0",
       poster: "https://picsum.photos/seed/emtôidó1/400/600",
-      embed: "https://xnhau.pink/embed/252524"
-    },
-    {
-      name: "EM TÔI (1)",
-      year: "2024",
-      rating: "9.0",
+      embed: "https://xnhau.pink/embed/252524" },
+    { name: "EM TÔI (1)", year: "2024", rating: "9.0",
       poster: "https://picsum.photos/seed/emtôi1/400/600",
-      embed: "https://xnhau.pink/embed/288097"
-    }
+      embed: "https://xnhau.pink/embed/288097" }
   ];
 
-  /* ============================================================
-     DOM
-     ============================================================ */
   const keyScreen      = document.getElementById("keyScreen");
   const galleryScreen  = document.getElementById("galleryScreen");
   const playerScreen   = document.getElementById("playerScreen");
+  const inputWrap      = document.getElementById("inputWrap");
   const input          = document.getElementById("keyInput");
   const btnGet         = document.getElementById("btnGet");
   const btnPaste       = document.getElementById("btnPaste");
@@ -832,14 +960,45 @@
   const cdMin          = document.getElementById("cdMin");
   const cdSec          = document.getElementById("cdSec");
 
-  let countdownInterval = null;
+  const lockOverlay    = document.getElementById("lockOverlay");
+  const lockSub        = document.getElementById("lockSub");
+  const lockMin        = document.getElementById("lockMin");
+  const lockSec        = document.getElementById("lockSec");
+  const lockVnTime     = document.getElementById("lockVnTime");
 
+  const noticeBanner   = document.getElementById("noticeBanner");
+  const noticeClose    = document.getElementById("noticeClose");
+
+  const expiredOverlay = document.getElementById("expiredOverlay");
+  const expiredKeyName = document.getElementById("expiredKeyName");
+  const expiredOk      = document.getElementById("expiredOk");
+
+  let countdownInterval = null;
+  let lockInterval = null;
+  let expiryCheckInterval = null;
+
+  /* NOTICE */
+  function showNotice() {
+    try {
+      if (localStorage.getItem(LS_NOTICE) === "1") return;
+    } catch (e) {}
+    setTimeout(() => noticeBanner.classList.add("show"), 400);
+    setTimeout(() => {
+      if (noticeBanner.classList.contains("show")) hideNotice();
+    }, 6400);
+  }
+  function hideNotice() {
+    noticeBanner.classList.remove("show");
+    try { localStorage.setItem(LS_NOTICE, "1"); } catch (e) {}
+  }
+  noticeClose.addEventListener("click", hideNotice);
+
+  /* HELPERS */
   function setStatus(msg, type) {
     status.textContent = msg;
-    status.classList.remove("ok", "error");
+    status.classList.remove("ok", "error", "warn");
     if (type) status.classList.add(type);
   }
-
   function formatVNTime(ts) {
     const d = new Date(ts);
     const vn = new Date(d.getTime() + (d.getTimezoneOffset() * 60000) + (7 * 3600000));
@@ -847,28 +1006,169 @@
     return pad(vn.getDate()) + "/" + pad(vn.getMonth() + 1) + "/" + vn.getFullYear()
       + " " + pad(vn.getHours()) + ":" + pad(vn.getMinutes()) + ":" + pad(vn.getSeconds());
   }
+  function pad2(n) { return String(n).padStart(2, "0"); }
 
   function saveActivation(key, activatedAt) {
     try {
-      const data = JSON.parse(localStorage.getItem("ff_keys_db") || "{}");
+      const data = JSON.parse(localStorage.getItem(LS_KEYS) || "{}");
       data[key] = activatedAt;
-      localStorage.setItem("ff_keys_db", JSON.stringify(data));
-      localStorage.setItem("ff_current_key", key);
+      localStorage.setItem(LS_KEYS, JSON.stringify(data));
+      localStorage.setItem(LS_CURRENT, key);
     } catch (e) {}
   }
-
   function getActivation(key) {
     try {
-      const data = JSON.parse(localStorage.getItem("ff_keys_db") || "{}");
+      const data = JSON.parse(localStorage.getItem(LS_KEYS) || "{}");
       return data[key] || 0;
     } catch (e) { return 0; }
   }
-
   function getCurrentKey() {
-    try { return localStorage.getItem("ff_current_key") || ""; }
+    try { return localStorage.getItem(LS_CURRENT) || ""; }
     catch (e) { return ""; }
   }
+  function getWrongCount() {
+    try { return parseInt(localStorage.getItem(LS_WRONG) || "0", 10); }
+    catch (e) { return 0; }
+  }
+  function setWrongCount(n) {
+    try { localStorage.setItem(LS_WRONG, String(n)); } catch (e) {}
+  }
+  function getLockUntil() {
+    try { return parseInt(localStorage.getItem(LS_LOCK) || "0", 10); }
+    catch (e) { return 0; }
+  }
+  function setLockUntil(ts) {
+    try { localStorage.setItem(LS_LOCK, String(ts)); } catch (e) {}
+  }
+  function clearLock() {
+    try {
+      localStorage.removeItem(LS_LOCK);
+      localStorage.removeItem(LS_WRONG);
+    } catch (e) {}
+  }
 
+  /* LOCK */
+  function showLock(until) {
+    lockOverlay.classList.add("show");
+    inputWrap.classList.add("disabled");
+    btnConfirm.disabled = true;
+    btnPaste.disabled = true;
+    lockVnTime.textContent = "Mở khóa lúc: " + formatVNTime(until);
+
+    if (lockInterval) clearInterval(lockInterval);
+
+    function tick() {
+      const remain = until - Date.now();
+      if (remain <= 0) {
+        clearInterval(lockInterval);
+        lockInterval = null;
+        hideLock();
+        return;
+      }
+      const totalSec = Math.ceil(remain / 1000);
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      lockMin.textContent = pad2(m);
+      lockSec.textContent = pad2(s);
+    }
+    tick();
+    lockInterval = setInterval(tick, 1000);
+  }
+  function hideLock() {
+    lockOverlay.classList.remove("show");
+    inputWrap.classList.remove("disabled");
+    btnConfirm.disabled = false;
+    btnPaste.disabled = false;
+    clearLock();
+    setStatus("Đã mở khóa. Vui lòng nhập key.", "ok");
+  }
+  function checkExistingLock() {
+    const until = getLockUntil();
+    if (until && until > Date.now()) {
+      showLock(until);
+      return true;
+    } else if (until) {
+      clearLock();
+    }
+    return false;
+  }
+
+  /* EXPIRED OVERLAY */
+  function showExpired(keyName) {
+    expiredKeyName.textContent = keyName || "—";
+    expiredOverlay.classList.add("show");
+    // Dừng video đang phát
+    try {
+      movieFrame.src = "about:blank";
+    } catch (e) {}
+  }
+
+  function hideExpired() {
+    expiredOverlay.classList.remove("show");
+  }
+
+  /* Nút ĐÃ RÕ — quay lại giao diện nhập key */
+  expiredOk.addEventListener("click", () => {
+    hideExpired();
+
+    // Ẩn các màn khác
+    galleryScreen.classList.remove("show");
+    playerScreen.classList.remove("show");
+    bottomNav.classList.remove("show");
+    profileOverlay.classList.remove("show");
+    movieFrame.src = "about:blank";
+
+    // Reset key
+    try {
+      localStorage.removeItem(LS_CURRENT);
+    } catch (e) {}
+
+    // Hiện key screen
+    keyScreen.style.display = "flex";
+    keyScreen.style.opacity = "1";
+    keyScreen.style.transform = "scale(1)";
+
+    // Reset input
+    input.value = "";
+    input.disabled = false;
+    input.style.opacity = "1";
+    inputWrap.classList.remove("disabled");
+    btnConfirm.disabled = false;
+    btnPaste.disabled = false;
+    successBox.classList.remove("show");
+    setStatus("Key đã hết hạn. Vui lòng nhập key mới.", "error");
+  });
+
+  /* KIỂM TRA KEY HẾT HẠN ĐỊNH KỲ */
+  function startExpiryCheck() {
+    if (expiryCheckInterval) clearInterval(expiryCheckInterval);
+
+    expiryCheckInterval = setInterval(() => {
+      const curKey = getCurrentKey();
+      if (!curKey) return;
+
+      const activatedAt = getActivation(curKey);
+      if (!activatedAt) return;
+
+      if (Date.now() >= activatedAt + KEY_DURATION_MS) {
+        // Key vừa hết hạn → hiện thông báo
+        clearInterval(expiryCheckInterval);
+        expiryCheckInterval = null;
+
+        // Chỉ hiện nếu đang ở gallery / player
+        const isActive = galleryScreen.classList.contains("show")
+                      || playerScreen.classList.contains("show");
+
+        if (isActive) {
+          // Đóng profile nếu đang mở
+          profileOverlay.classList.remove("show");
+          showExpired(curKey);
+        }
+      }
+    }, 1000);
+  }
+
+  /* GALLERY */
   function buildGallery() {
     movieGrid.innerHTML = "";
     MOVIES.forEach((movie, idx) => {
@@ -901,16 +1201,13 @@
   }
 
   let hideTitleTimer = null;
-
   function openPlayer(movie) {
     playerTitle.textContent = movie.name;
     movieFrame.src = movie.embed;
-
     galleryScreen.classList.remove("show");
     playerScreen.classList.add("show");
     bottomNav.classList.remove("show");
     playerTitle.classList.add("show");
-
     clearTimeout(hideTitleTimer);
     hideTitleTimer = setTimeout(() => {
       playerTitle.classList.remove("show");
@@ -924,12 +1221,15 @@
     bottomNav.classList.add("show");
   });
 
-  /* ============================================================
-     XÁC THỰC KEY — CHỈ LOCAL
-     ============================================================ */
+  /* XÁC THỰC KEY */
   btnConfirm.addEventListener("click", () => {
-    const value = input.value.trim();
+    const until = getLockUntil();
+    if (until && until > Date.now()) {
+      showLock(until);
+      return;
+    }
 
+    const value = input.value.trim();
     if (!value) {
       setStatus("Vui lòng nhập key trước khi xác nhận.", "error");
       input.focus();
@@ -940,9 +1240,22 @@
 
     setTimeout(() => {
       if (!VALID_KEYS.includes(value)) {
-        setStatus("❌ KEY không hợp lệ. Vui lòng kiểm tra lại.", "error");
-        input.focus();
-        input.select();
+        const wrong = getWrongCount() + 1;
+        setWrongCount(wrong);
+
+        if (wrong >= MAX_WRONG) {
+          const lockUntil = Date.now() + LOCK_DURATION_MS;
+          setLockUntil(lockUntil);
+          setWrongCount(MAX_WRONG);
+          setStatus("", "");
+          input.value = "";
+          input.blur();
+          showLock(lockUntil);
+        } else {
+          setStatus("❌ SAI " + wrong + "/" + MAX_WRONG, "error");
+          input.focus();
+          input.select();
+        }
         return;
       }
 
@@ -950,19 +1263,19 @@
       const now = Date.now();
 
       if (existing && (now - existing) >= KEY_DURATION_MS) {
-        setStatus("❌ Key đã hết hạn (quá 13 tiếng từ lúc kích hoạt).", "error");
+        const expires = formatVNTime(existing + KEY_DURATION_MS);
+        setStatus("❌ Key đã hết hạn lúc " + expires + " (giờ VN)", "error");
         input.focus();
         input.select();
         return;
       }
 
-      if (!existing) {
-        saveActivation(value, now);
-      } else {
-        saveActivation(value, existing);
-      }
+      setWrongCount(0);
+      if (!existing) saveActivation(value, now);
+      else saveActivation(value, existing);
 
-      setStatus("");
+      const exp = formatVNTime((existing || now) + KEY_DURATION_MS);
+      setStatus("✓ Key hợp lệ · Hết hạn lúc " + exp + " (VN)", "ok");
       successBox.classList.add("show");
       btnConfirm.disabled = true;
       input.disabled = true;
@@ -970,8 +1283,7 @@
 
       setTimeout(() => {
         showGallery();
-      }, 900);
-
+      }, 1200);
     }, 600);
   });
 
@@ -986,6 +1298,8 @@
       buildGallery();
       navHome.classList.add("active");
       navProfile.classList.remove("active");
+      // Bắt đầu kiểm tra hết hạn
+      startExpiryCheck();
     }, 500);
   }
 
@@ -1028,7 +1342,7 @@
   input.addEventListener("input", () => {
     if (status.textContent) {
       status.textContent = "";
-      status.classList.remove("ok", "error");
+      status.classList.remove("ok", "error", "warn");
     }
   });
 
@@ -1036,22 +1350,18 @@
     navHome.classList.toggle("active", tab === "home");
     navProfile.classList.toggle("active", tab === "profile");
   }
-
   navHome.addEventListener("click", () => {
     profileOverlay.classList.remove("show");
     setActiveNav("home");
   });
-
   navProfile.addEventListener("click", () => {
     setActiveNav("profile");
     openProfile();
   });
-
   closeProfile.addEventListener("click", () => {
     profileOverlay.classList.remove("show");
     setActiveNav("home");
   });
-
   profileOverlay.addEventListener("click", (e) => {
     if (e.target === profileOverlay) {
       profileOverlay.classList.remove("show");
@@ -1062,63 +1372,55 @@
   function openProfile() {
     const key = getCurrentKey();
     const activatedAt = getActivation(key);
-
     profileKey.textContent = key || "—";
-
     if (activatedAt) {
       profileVnTime.textContent = "Kích hoạt: " + formatVNTime(activatedAt)
         + " · Hết hạn: " + formatVNTime(activatedAt + KEY_DURATION_MS);
     } else {
       profileVnTime.textContent = "Chưa kích hoạt";
     }
-
     profileOverlay.classList.add("show");
     startCountdown(activatedAt + KEY_DURATION_MS);
   }
 
   function startCountdown(expire) {
     if (countdownInterval) clearInterval(countdownInterval);
-
     function tick() {
       let remain = expire - Date.now();
       if (remain < 0) remain = 0;
-
       const d = Math.floor(remain / 86400000);
       const h = Math.floor((remain % 86400000) / 3600000);
       const m = Math.floor((remain % 3600000) / 60000);
       const s = Math.floor((remain % 60000) / 1000);
-
-      cdDay.textContent  = String(d).padStart(2, "0");
-      cdHour.textContent = String(h).padStart(2, "0");
-      cdMin.textContent  = String(m).padStart(2, "0");
-      cdSec.textContent  = String(s).padStart(2, "0");
-
+      cdDay.textContent  = pad2(d);
+      cdHour.textContent = pad2(h);
+      cdMin.textContent  = pad2(m);
+      cdSec.textContent  = pad2(s);
       if (remain <= 0) {
         clearInterval(countdownInterval);
         countdownInterval = null;
       }
     }
-
     tick();
     countdownInterval = setInterval(tick, 1000);
   }
 
   logoutBtn.addEventListener("click", () => {
     if (!confirm("Bạn có chắc muốn đăng xuất key?")) return;
-
-    try { localStorage.removeItem("ff_current_key"); } catch (e) {}
-
+    try { localStorage.removeItem(LS_CURRENT); } catch (e) {}
     if (countdownInterval) {
       clearInterval(countdownInterval);
       countdownInterval = null;
     }
-
+    if (expiryCheckInterval) {
+      clearInterval(expiryCheckInterval);
+      expiryCheckInterval = null;
+    }
     profileOverlay.classList.remove("show");
     bottomNav.classList.remove("show");
     galleryScreen.classList.remove("show");
     playerScreen.classList.remove("show");
     movieFrame.src = "about:blank";
-
     keyScreen.style.display = "flex";
     keyScreen.style.opacity = "1";
     keyScreen.style.transform = "scale(1)";
@@ -1131,20 +1433,34 @@
     setStatus("Đã đăng xuất key. Vui lòng nhập lại.", "ok");
   });
 
+  /* KHỞI TẠO */
+  showNotice();
+
   try {
-    const currentKey = getCurrentKey();
-    if (currentKey && VALID_KEYS.includes(currentKey)) {
-      if (isKeyStillValid(currentKey)) {
-        input.value = currentKey;
-        setStatus("Key đang hoạt động · tự động đăng nhập", "ok");
-        successBox.classList.add("show");
-        btnConfirm.disabled = true;
-        input.disabled = true;
-        input.style.opacity = "0.7";
-        setTimeout(() => showGallery(), 900);
-      } else {
-        localStorage.removeItem("ff_current_key");
-        setStatus("Key trước đã hết hạn 13 tiếng. Vui lòng dùng key mới.", "error");
+    if (checkExistingLock()) {
+      // đang khóa
+    } else {
+      const currentKey = getCurrentKey();
+      if (currentKey && VALID_KEYS.includes(currentKey)) {
+        if (isKeyStillValid(currentKey)) {
+          const activatedAt = getActivation(currentKey);
+          input.value = currentKey;
+          setStatus("✓ Key đang hoạt động · Hết hạn lúc "
+            + formatVNTime(activatedAt + KEY_DURATION_MS) + " (VN)", "ok");
+          successBox.classList.add("show");
+          btnConfirm.disabled = true;
+          input.disabled = true;
+          input.style.opacity = "0.7";
+          setTimeout(() => showGallery(), 900);
+        } else {
+          localStorage.removeItem(LS_CURRENT);
+          setStatus("Key trước đã hết hạn. Vui lòng dùng key mới.", "error");
+        }
+      }
+      const wrong = getWrongCount();
+      if (wrong > 0 && wrong < MAX_WRONG) {
+        setStatus("⚠ Bạn đã sai " + wrong + "/" + MAX_WRONG + " lần. "
+          + "Còn " + (MAX_WRONG - wrong) + " lần trước khi bị khóa.", "warn");
       }
     }
   } catch (e) {}
