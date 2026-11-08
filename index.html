@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Key Access · Auth.gg</title>
+<title>Key Access · KeyAuth</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box;
       font-family:'Segoe UI','Inter',system-ui,sans-serif; }
@@ -211,23 +211,31 @@
   "use strict";
 
   /* ==========================================================
-     CẤU HÌNH AUTH.GG
+     CẤU HÌNH KEYAUX (KeyAuth v1)
      ========================================================== */
   const CONFIG = {
-    API_KEY:  "as_nd5jpgikhoba97fbmel47cxvqtovjzsnxa01z9io6bhsoixb",
-    APP_ID:   "fo16bc51881imc664hdl55hd",
+    BASE_URL: "https://service.keyaux.com/api/v1/",
+
+    APP_NAME: "NCB_AI",
     OWNER_ID: "nvd43oxl5iwjumumfyj1j4dl",
-    SECRET:   "as_nd5jpgikhoba97fbmel47cxvqtovjzsnxa01z9io6bhsoixb",
-    APP_VER:  "1.0.0",
-    API_URL:  "https://api.auth.gg/v1/",
+    APP_ID:   "fo16bc51881imc664hdl55hd",
+
+    // API Key mới (prefix ka_)
+    API_KEY: "ka_edg6vzp2dcxtbn82eyd6kmimtsu2l1q85cfxkzzfb8ad793v",
+
+    // Secret cũ (giữ lại làm fallback nếu server cần)
+    SECRET: "as_nd5jpgikhoba97fbmel47cxvqtovjzsnxa01z9io6bhsoixb",
+
+    APP_VERSION: "1.0.0",
     TIMEOUT_MS: 12000,
-    GET_KEY_URL: "https://example.com/get-key" // <-- đổi link
+    GET_KEY_URL: "https://example.com/get-key"
   };
 
-  const STORAGE_KEY    = "ff_verified_key";
-  const STORAGE_TIME   = "ff_verified_at";
-  const STORAGE_EXPIRE = "ff_expire_at";
-  const STORAGE_SESSION= "ff_session_id";
+  const STORAGE_KEY     = "ff_verified_key";
+  const STORAGE_TIME    = "ff_verified_at";
+  const STORAGE_EXPIRE  = "ff_expire_at";
+  const STORAGE_SESSION = "ff_session_id";
+  const STORAGE_HWID    = "ff_hwid";
 
   /* ==========================================================
      DOM
@@ -267,75 +275,14 @@
   }
 
   /* ==========================================================
-     BƯỚC 1: AUTH.GG INIT — LẤY SESSION ID
-     ========================================================== */
-  async function authInit() {
-    const body = new URLSearchParams({
-      type:   "init",
-      ver:    CONFIG.APP_VER,
-      aid:    CONFIG.APP_ID,
-      apikey: CONFIG.API_KEY,
-      secret: CONFIG.SECRET
-    });
-
-    const res = await fetchWithTimeout(CONFIG.API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: body.toString()
-    });
-
-    if (!res.ok) throw new Error("Init HTTP " + res.status);
-
-    const data = await res.json();
-
-    if (data.result !== "success") {
-      throw new Error(data.message || "Init thất bại");
-    }
-
-    return data.sessionid;
-  }
-
-  /* ==========================================================
-     BƯỚC 2: AUTH.GG LICENSE — XÁC THỰC KEY
-     ========================================================== */
-  async function authLicense(sessionid, userKey) {
-    const body = new URLSearchParams({
-      type:      "license",
-      key:       userKey,
-      aid:       CONFIG.APP_ID,
-      apikey:    CONFIG.API_KEY,
-      secret:    CONFIG.SECRET,
-      sessionid: sessionid,
-      hwid:      getHWID()
-    });
-
-    const res = await fetchWithTimeout(CONFIG.API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: body.toString()
-    });
-
-    if (!res.ok) throw new Error("License HTTP " + res.status);
-
-    const data = await res.json();
-
-    return {
-      valid:     data.result === "success",
-      message:   data.message || "",
-      expire_at: data.expires || data.expired_date || null,
-      sessionid: sessionid,
-      raw:       data
-    };
-  }
-
-  /* ==========================================================
-     HWID — ĐỊNH DANH THIẾT BỊ
+     HWID — ĐỊNH DANH THIẾT BỊ CỐ ĐỊNH
      ========================================================== */
   function getHWID() {
+    try {
+      const saved = localStorage.getItem(STORAGE_HWID);
+      if (saved) return saved;
+    } catch (e) {}
+
     let base = "";
     try {
       base += navigator.userAgent || "";
@@ -344,32 +291,111 @@
       base += "|" + (navigator.hardwareConcurrency || "");
       base += "|" + (navigator.platform || "");
       base += "|" + (navigator.deviceMemory || "");
+      base += "|" + (screen.colorDepth || "");
     } catch (e) {}
 
-    // Hash SHA-256 nếu có
-    try {
-      let h = 0;
-      for (let i = 0; i < base.length; i++) {
-        h = ((h << 5) - h) + base.charCodeAt(i);
-        h |= 0;
-      }
-      return "WEB-" + Math.abs(h).toString(16).padStart(16, "0");
-    } catch (e) {
-      return "WEB-UNKNOWN";
+    let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    for (let i = 0; i < base.length; i++) {
+      const c = base.charCodeAt(i);
+      h1 = Math.imul(h1 ^ c, 2654435761);
+      h2 = Math.imul(h2 ^ c, 1597334677);
     }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+
+    const hwid = "WEB-" +
+      (h2 >>> 0).toString(16).padStart(8, "0") +
+      (h1 >>> 0).toString(16).padStart(8, "0");
+
+    try { localStorage.setItem(STORAGE_HWID, hwid); } catch (e) {}
+    return hwid;
+  }
+
+  /* ==========================================================
+     HEADERS CHUNG — GỬI KÈM API KEY (ka_...)
+     ========================================================== */
+  function buildHeaders() {
+    return {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "X-API-Key": CONFIG.API_KEY,
+      "Authorization": "Bearer " + CONFIG.API_KEY
+    };
+  }
+
+  /* ==========================================================
+     BƯỚC 1: INIT — LẤY SESSION ID
+     ========================================================== */
+  async function keyauxInit() {
+    const body = new URLSearchParams({
+      type:    "init",
+      ver:     CONFIG.APP_VERSION,
+      name:    CONFIG.APP_NAME,
+      ownerid: CONFIG.OWNER_ID,
+      apikey:  CONFIG.API_KEY,
+      enckey:  ""
+    });
+
+    const res = await fetchWithTimeout(CONFIG.BASE_URL + "?type=init", {
+      method: "POST",
+      headers: buildHeaders(),
+      body: body.toString()
+    });
+
+    if (!res.ok) throw new Error("Init HTTP " + res.status);
+
+    const data = await res.json();
+    console.log("[KeyAuth Init]", data);
+
+    if (!data.success) {
+      throw new Error(data.message || "Init thất bại");
+    }
+
+    return data.sessionid;
+  }
+
+  /* ==========================================================
+     BƯỚC 2: LICENSE — XÁC THỰC KEY
+     ========================================================== */
+  async function keyauxLicense(sessionid, userKey) {
+    const body = new URLSearchParams({
+      type:      "license",
+      key:       userKey,
+      sessionid: sessionid,
+      name:      CONFIG.APP_NAME,
+      ownerid:   CONFIG.OWNER_ID,
+      apikey:    CONFIG.API_KEY,
+      hwid:      getHWID()
+    });
+
+    const res = await fetchWithTimeout(CONFIG.BASE_URL + "?type=license", {
+      method: "POST",
+      headers: buildHeaders(),
+      body: body.toString()
+    });
+
+    if (!res.ok) throw new Error("License HTTP " + res.status);
+
+    const data = await res.json();
+    console.log("[KeyAuth License]", data);
+
+    return {
+      valid:     data.success === true,
+      message:   data.message || "",
+      expire_at: data.expires || data.expiry || null,
+      sessionid: sessionid,
+      raw:       data
+    };
   }
 
   /* ==========================================================
      XÁC THỰC CHÍNH
      ========================================================== */
   async function verifyKey(userKey) {
-    // Bước 1: Init
-    setStatus("⏳ Đang khởi tạo session...", "info");
-    const sessionid = await authInit();
+    setStatus("⏳ Đang kết nối KeyAuth...", "info");
+    const sessionid = await keyauxInit();
 
-    // Bước 2: License
     setStatus("⏳ Đang xác thực license...", "info");
-    const result = await authLicense(sessionid, userKey);
+    const result = await keyauxLicense(sessionid, userKey);
 
     return result;
   }
@@ -429,7 +455,7 @@
       }
 
     } catch (err) {
-      console.warn("[Auth.gg Error]", err);
+      console.warn("[KeyAuth Error]", err);
       setStatus("❌ Lỗi: " + (err.message || "Không kết nối được server"), "error");
       setLoading(false);
     }
@@ -513,6 +539,17 @@
       }
     }
   } catch (e) {}
+
+  /* ==========================================================
+     LOG DEBUG
+     ========================================================== */
+  console.log("[KeyAuth] Config:", {
+    base: CONFIG.BASE_URL,
+    app_name: CONFIG.APP_NAME,
+    owner_id: CONFIG.OWNER_ID.slice(0, 8) + "...",
+    api_key: CONFIG.API_KEY.slice(0, 12) + "...",
+    hwid: getHWID()
+  });
 
 })();
 </script>
